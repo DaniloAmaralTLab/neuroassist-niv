@@ -1,0 +1,23 @@
+{
+  "name": "trn",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/trn/src",
+  "projectType": "library",
+  "tags": ["scope:trn", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/trn/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/trn"],
+      "options": {
+        "jestConfig": "libs/trn/jest.config.ts"
+      }
+    }
+  }
+}

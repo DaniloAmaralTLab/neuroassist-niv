@@ -17,7 +17,10 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 | HIST | hist-service | OK | OK | OK | OK | OK | 2026-11-20 |
 | DASH | dash-service | OK | N/A | N/A | N/A | N/A | 2026-11-20 |
 | CONV | conv-service | OK | OK | OK | OK | OK | 2026-11-22 |
-| REG | neuroassist-niv-service-registry | OK | OK | N/A | em andamento | pendente | 2026-11-22 |
+| REG | neuroassist-niv-service-registry | OK | OK | N/A | OK | OK | 2026-11-22 |
+| MIG | neuroassist-niv-migrations | OK | OK | N/A | OK | OK | 2026-11-22 |
+| TRN | trn-service | OK | OK | OK | OK | OK | 2026-11-22 |
+| GWY | neuroassist-niv-api-gateway | OK | OK | N/A | em andamento | pendente | 2026-11-22 |
 
 ## Ledger de gates diferidos
 
@@ -43,6 +46,8 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 | 2026-11-20 | HIST/hist-service | securityGate | `SecurityConfig @EnableMethodSecurity + authorities claim (D-642)` | OK - applied; enforcement proven in PAT MethodSecurityEnforcementIT 4/4 (same template) |
 | 2026-11-20 | PAT/pat-service | securityGate | `gradle integrationTest --tests '*MethodSecurityEnforcementIT*' (from pat-service dir)` | OK - 4/4: no token 401; missing authority 403; authority in scope claim 403; authority in authorities claim passes (D-642) |
 | 2026-11-20 | DASH/dash-service | backendPipeline | `ADR-001 dash-has-no-backend-service` | N/A - DASH has no backend (FE composition of PAT/EDGE/EVNT/HIST APIs); registry backendService kept as docs anchor; no MIG/GWY/REG entries |
+| 2026-11-22 | REG/neuroassist-niv-service-registry | integrationTest | `gradle test (ApplicationContextLoadsIT)` | OK (1/1; test yml fixed: no eureka.client.enabled=false) |
+| 2026-11-22 | MIG/neuroassist-niv-migrations | integrationTest (ApplicationContextLoadsIT) | `gradle :neuroassist-niv-migrations:test --tests '*.integration.*'` | OK — contextLoads passed (webEnvironment=NONE; no Docker needed) |
 
 ## Log cronologico
 - 2026-11-19T17:46:00 -- ACS -- M1 Vision -- OK -- BE 11 artifacts
@@ -51,3 +56,6 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 - 2026-11-22T09:37:44 -- CONV -- Specs -- OK -- 27 files; 6 conv.* authorities; Flyway V0070-V0079; HIST facts classified
 - 2026-11-22T09:45:51 -- CONV -- Specs-Validate -- OK (gate diferido) -- 96 EARS, 29 scenarios; scaffold-format glue, quoted-Examples defect fixed; BDD gate deferred until scaffold
 - 2026-11-22T10:19:42 -- CONV -- Scaffold -- OK -- arch 15/15, integration 39/39 (CucumberIT 34/34, MethodSecurityEnforcementIT 4/4); fixes: dual port adapter, EmbeddedKafka, doubled {string} quoting, shadowed literals
+- 2026-11-22T10:39:02 -- REG -- Scaffold -- OK -- registry skeleton, package com.neuroassist.registry, 9 arch tests + context IT pass
+- 2026-11-22T11:17:04 -- TRN -- Specs+Specs-Validate -- OK (gate diferido) -- 58 EARS, 31 scenarios (40 instances); 12 trn.* authorities; Flyway V0080-V0089; port 8089
+- 2026-11-22T11:52:30 -- TRN -- Scaffold -- OK -- arch 15/15, integration 45/45 (CucumberIT 40/40, MethodSecurityEnforcementIT 4/4). Open: controller stubs diverge from api-contract (flat paths/PUT); POST /trn/sessions/{id}/dialog missing from generator-config application_services (TRN-007 must add)

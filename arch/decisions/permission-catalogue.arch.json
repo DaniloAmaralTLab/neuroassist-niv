@@ -1,7 +1,7 @@
 {
   "_schema_version": 1,
   "version": "1.0.0",
-  "last_changed": "2026-11-19",
+  "last_changed": "2026-11-22",
   "convention": {
     "format": "<module>.<resource>.<action>",
     "note": "Snake/kebab case, lowercase. Wildcards prohibited in production seeds — individual rows per permission for auditing. Some 4-part codes are intentional (e.g. cad.vendedor.comissao.config) when a resource has natural sub-resources."
@@ -145,7 +145,20 @@
       "prefix": "trn",
       "name": "AI-Assisted Training (Speech Tree Authoring)",
       "description": "Phase separate from the daily use of CONV: an LLM (Claude/Anthropic) converses with the caregiver and the patient (collaborative flow, dual authorization) to propose new categories/phrases; approved content is indexed in Elasticsearch and has audio synthesized via ElevenLabs. It does not take part in the patient's communication runtime.",
-      "permissions": []
+      "permissions": [
+        "trn.consent.create",
+        "trn.consent.read",
+        "trn.consent.revoke",
+        "trn.content.delete",
+        "trn.proposal.approve",
+        "trn.proposal.read",
+        "trn.proposal.reject",
+        "trn.proposal.update",
+        "trn.publication.create",
+        "trn.publication.read",
+        "trn.session.create",
+        "trn.session.read"
+      ]
     }
   ],
   "$comment": "Ships ONLY the modules of framework LAYERS, never a client's bounded contexts (D-103 Gap B, D-584). `gro` is here because the growth layer is a framework capability any project can enable (growth.enabled, D-332..D-337) and /gr-architect-admin-module scaffolds against it. A client's own modules go in arch/overrides/permission-catalogue.partial.json via the D-074 deep-merge; see _examples/ for ready-to-copy catalogues (eerripe, candeeiro-so, neuroassist-ai)."

@@ -4,6 +4,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { appRoutes } from './app.routes';
 import { provideAcs } from '@neuroassist/acs';
 import { provideConv } from '@neuroassist/conv';
+import { provideTrn } from '@neuroassist/trn';
 import { providePat } from '@neuroassist/pat';
 import { provideEdge } from '@neuroassist/edge';
 import { provideEvnt } from '@neuroassist/evnt';
@@ -36,5 +37,10 @@ export const appConfig: ApplicationConfig = {
     // carry-forward `scaffold:mock-adapter-default` — default is 'http', not 'mock'.
     // Promoted by /fe-architect-promote neuroassist-niv CONV.
     ...provideConv(),
+    // TRN defaults to http adapter (trn-service is specified — api-contract + SPEC-01..11 published).
+    // carry-forward `scaffold:mock-adapter-default` — default is 'http', not 'mock'.
+    // Both TRN routes run under the caregiver JWT (no patient-session token, ACS INV-3).
+    // Promoted by /fe-architect-promote neuroassist-niv TRN.
+    ...provideTrn(),
   ],
 };

@@ -72,6 +72,14 @@ export const appRoutes: Routes = [
         path: 'patient',
         loadChildren: () => import('@neuroassist/conv').then(r => r.CONV_ROUTES),
       },
+      // TRN — AI-Assisted Training / Speech Tree Authoring.
+      // Both routes (/training and /training/assent) run under the caregiver identity.
+      // No patient-session route — patient assent is in-session under trn.proposal.approve.
+      // Promoted by /fe-architect-promote neuroassist-niv TRN.
+      {
+        path: 'training',
+        loadChildren: () => import('@neuroassist/trn').then(r => r.TRN_ROUTES),
+      },
       // Additional modules added progressively via /fe-architect-promote.
     ],
   },

@@ -1,0 +1,73 @@
+@startuml trn-c4-component
+' C4 Component — TRN (trn-service) — hexagonal (java: api/application/domain/infrastructure)
+title TRN — Components (hexagonal, Java)
+
+skinparam componentStyle rectangle
+
+package "api" {
+  [SessionController]     <<POST /trn/sessions · GET>>
+  [DialogController]      <<POST /trn/sessions/{id}/dialog · proposals>>
+  [ApprovalController]    <<caregiver-confirmation · patient-assent · rejection · withdrawal>>
+  [ConsentController]     <<POST /trn/consents · GET · revocation>>
+  [PublicationController] <<POST .../publication · GET /trn/publications/{id}>>
+  [ErasureController]     <<DELETE /trn/patients/{id}/content>>
+  [ExceptionAdvice]       <<ProblemDetail / RFC 7807>>
+}
+
+package "application" {
+  [OpenSessionService]          <<trn.session.create/read>>
+  [DialogService]               <<trn.proposal.update (refine drafts)>>
+  [ApproveProposalService]      <<dual-auth gate — INV-TRN-1>>
+  [CaptureConsentService]       <<trn.consent.* — INV-TRN-3>>
+  [SynthesizeAndPublishService] <<synth+index+publish; INV-TRN-4/5/6>>
+  [EraseContentService]         <<crypto-shred + CONV retire/erase; INV-TRN-9>>
+  interface "port/in\n(use-case interfaces — NO tenantId, RULE-04)" as PIN
+  interface "port/out\n(repos + external ports)" as POUT
+}
+
+package "domain" {
+  [TrainingSession]
+  [Proposal + Authorization(VO)]
+  [ConsentRecord]
+  [VoiceModel / VoiceSample / AudioAsset]
+  [Publication]
+  note bottom : lifecycle state machine + INV-TRN-1..9\n(pure POJO; no Spring/JPA/vendor SDK)
+}
+
+package "infrastructure" {
+  [TrainingSessionRepositoryAdapter]   ..|> POUT
+  [AnthropicLlmDialogAdapter]          ..|> POUT
+  [ElevenLabsTtsAdapter]               ..|> POUT
+  [ElasticsearchSearchIndexAdapter]    ..|> POUT
+  [ConvPublicationClient (Feign)]      ..|> POUT
+  [PatClient (Feign)]                  ..|> POUT
+  [HistAuditClient (Feign)]            ..|> POUT
+  [BlobStore + PerSubjectKeyManager]   ..|> POUT
+  [OutboundJobRunner (durable-retry)]  ..|> POUT
+  [TenantContextFilter / JWKS / CorrelationIdInterceptor]
+}
+
+[SessionController] --> PIN
+[DialogController] --> PIN
+[ApprovalController] --> PIN
+[ConsentController] --> PIN
+[PublicationController] --> PIN
+[ErasureController] --> PIN
+PIN -down- [OpenSessionService]
+PIN -down- [DialogService]
+PIN -down- [ApproveProposalService]
+PIN -down- [CaptureConsentService]
+PIN -down- [SynthesizeAndPublishService]
+PIN -down- [EraseContentService]
+[ApproveProposalService] --> [Proposal + Authorization(VO)]
+[SynthesizeAndPublishService] --> POUT
+[EraseContentService] --> POUT
+[DialogService] --> POUT
+
+note right of [DialogController]
+  Inbound port signatures carry NO tenantId (RULE-04);
+  services call TenantContextHolder.require() first.
+  api must not import infrastructure.security.
+  LLM output is data, never instruction (INV-TRN-2).
+end note
+@enduml

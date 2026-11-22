@@ -1,0 +1,43 @@
+@startuml trn-c4-context
+' C4 Context — TRN (trn-service)
+title TRN — System Context (AI-Assisted Training / Speech Tree Authoring)
+
+skinparam componentStyle rectangle
+left to right direction
+
+actor "Family Caregiver /\nClinic Coordinator\n(caregiver token)" as Caregiver
+actor "Patient / Legal Guardian\n(in-session assent — domain fact,\nNOT a trn.* authority)" as Patient
+
+rectangle "trn-service\n(TRN — authoring, port 8089)" as TRN
+
+rectangle "Anthropic Claude\n(LLM dialog — external processor)" as LLM
+rectangle "ElevenLabs\n(voice synthesis — external processor)" as TTS
+database "Elasticsearch\n(approved-content index,\nauthoring-side, tenant-isolated)" as ES
+database "Blob storage\n(voice samples + audio,\nper-subject crypto key)" as BLOB
+
+rectangle "ACS\n(identity, caregiver JWT, JWKS,\nservice-client token)" as ACS
+rectangle "PAT\n(patient reference)" as PAT
+rectangle "HIST\n(append-only audit)" as HIST
+rectangle "CONV\n(speech-tree runtime — owns the published tree)" as CONV
+rectangle "MIG\n(centralized Flyway)" as MIG
+
+Caregiver --> TRN : open session, dialog,\napprove (caregiver half),\nconsent, publish, erase\n(caregiver token)
+Patient ..> TRN : in-session assent recorded\nby the supervising caregiver\n(ADR-002)
+
+TRN --> LLM : propose draft/phrase\n(minimised: patientId only,\nno name/PHI — INV-TRN-7)
+TRN --> TTS : synthesize approved phrase\n(consent-gated — INV-TRN-3)
+TRN --> ES : index approved content only\n(INV-TRN-5; non-blocking)
+TRN --> BLOB : voice samples + audio\n(per-subject key)
+
+TRN --> ACS : validate caregiver JWT (JWKS);\nhold service-client token
+TRN --> PAT : GET /pat/patients/{id}\n(pat.patient.read)
+TRN --> HIST : POST /hist/audit\n(hist.audit.record)
+TRN --> CONV : POST /conv/trees (publish),\n:retire, DELETE .../audio\n(TRN service-client)
+MIG --> TRN : applies trn schema migrations\n(V0080-V0089)
+
+note bottom of TRN
+  TRN is the AUTHORING phase, off the patient's live path.
+  LLM output is never auto-published (human-in-the-loop, INV-TRN-2).
+  A TRN or vendor outage never affects CONV runtime (INV-TRN-9).
+end note
+@enduml

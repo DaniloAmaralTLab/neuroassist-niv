@@ -1,0 +1,37 @@
+@startuml trn-c4-container
+' C4 Container — TRN (trn-service)
+title TRN — Containers
+
+skinparam componentStyle rectangle
+
+rectangle "trn-service\n(Spring Boot, Java 21, :8089)" as TRN
+database "PostgreSQL\n(schema trn, per-tenant +\nneuroassist_global authority seeds)" as PG
+database "Blob storage\n(voice samples / audio,\nper-subject crypto key)" as BLOB
+database "Elasticsearch\n(approved-content index)" as ES
+
+rectangle "Anthropic Claude" as LLM
+rectangle "ElevenLabs" as TTS
+rectangle "ACS (:8081)" as ACS
+rectangle "PAT (:8082)" as PAT
+rectangle "HIST (:8083)" as HIST
+rectangle "CONV (:8085)" as CONV
+rectangle "Eureka / REG (:8761)" as REG
+rectangle "MIG (Flyway)" as MIG
+
+TRN --> PG : JPA (schema-per-tenant);\noutbound_job durable-retry queue
+TRN --> BLOB : voice samples + synthesized audio
+TRN --> ES : SearchIndexPort (approved-only)
+TRN --> LLM : LlmDialogPort (minimised context)
+TRN --> TTS : TtsPort (consent-gated)
+TRN --> ACS : JWKS validation; service-client token
+TRN --> PAT : Feign — pat.patient.read (ETag/304)
+TRN --> HIST : Feign — hist.audit.record
+TRN --> CONV : Feign — publish / retire / erase\n(idempotent trn:publish:<approvalId>)
+TRN ..> REG : register / discover
+MIG ..> PG : applies trn migrations (V0080-V0089)
+
+note bottom of TRN
+  Messaging disabled: no broker. Resilience for long/flaky vendor and
+  CONV calls = in-service durable-retry jobs (outbound_job), not a bus (ADR-007).
+end note
+@enduml

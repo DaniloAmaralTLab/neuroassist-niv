@@ -360,7 +360,7 @@
         "displayName": "AI-Assisted Training (Speech Tree Authoring)",
         "description": "Phase separate from the daily use of CONV: an LLM (Claude/Anthropic) converses with the caregiver and the patient (collaborative flow, dual authorization) to propose new categories/phrases; approved content is indexed in Elasticsearch and has audio synthesized via ElevenLabs. It does not take part in the patient's communication runtime.",
         "backendService": "trn-service",
-        "frontendLib": "trn-ui",
+        "frontendLib": "trn",
         "hasUi": true,
         "isInfrastructure": false,
         "status": "planned"

@@ -231,3 +231,92 @@
 | INT-REG-001 | Integration smoke test: all in-fleet services (ACS, PAT, EDGE, EVNT, CONV, GEST, HIST, TRN, GWY) register with REG on startup | BE | P5 | INTACT |
 | INT-REG-002 | Integration test: GWY resolves downstream service routes via REG (Feign/LoadBalancer name resolution) | BE | P6 | INTACT |
 | INT-REG-003 | Integration test: lifecycle log events (registration, renewal, eviction) are shipped to Elasticsearch | BE | P7 | INTACT |
+| MIG-001 | Spring Boot non-web Gradle module scaffold for neuroassist-niv-migrations | BE | P1 | INTACT |
+| MIG-002 | MigrationMode enum + fail-fast argument validation (SPEC-01) | BE | P1 | INTACT |
+| MIG-003 | MigrationsJobRunner skeleton — CommandLineRunner entry point + exit code dispatch (SPEC-01) | BE | P1 | INTACT |
+| MIG-004 | SchemaAdmin — CREATE EXTENSION and CREATE SCHEMA outside @Transactional (SPEC-02, INV-MIG-6) | BE | P2 | INTACT |
+| MIG-005 | FlywayRunner — programmatic Flyway instance per schema (SPEC-02) | BE | P2 | INTACT |
+| MIG-006 | MigrationsJobRunner orchestration: baseline → global pass → tenant pass (SPEC-02) | BE | P2 | INTACT |
+| MIG-007 | Create V0001__extensions_and_global_schema.sql (baseline block, SPEC-04) | BE | P3 | INTACT |
+| MIG-008 | Create V0002__uuid_generate_v7.sql — PL/pgSQL uuid_generate_v7() baseline function (SPEC-04) | BE | P3 | INTACT |
+| MIG-009 | Create V0003__migration_range_registry.sql — registry DDL (SPEC-04, INV-MIG-2) | BE | P3 | INTACT |
+| MIG-010 | Create V0004__seed_migration_range_registry.sql — seed all known module blocks (SPEC-04) | BE | P3 | INTACT |
+| MIG-011 | Create V0005__tenant_template_baseline.sql — minimal tenant schema baseline (SPEC-04) | BE | P3 | INTACT |
+| MIG-012 | Gradle aggregation task — collect per-service reserved-block scripts into db/migration/{global,tenant} (SPEC-10) | BE | P4 | INTACT |
+| MIG-013 | TenantSchemaEnumerator — list t_* schemas from information_schema (SPEC-03) | BE | P4 | INTACT |
+| MIG-014 | SchemaAdmin.createSchemaIfAbsent() — idempotent non-transactional CREATE SCHEMA (SPEC-03, INV-MIG-6) | BE | P4 | INTACT |
+| MIG-015 | RangeRegistry guard — load migration_range_registry and assert no overlapping blocks before apply (SPEC-04, INV-MIG-2) | BE | P5 | INTACT |
+| MIG-016 | Per-schema progress reporting + structured logs (SPEC-07) | BE | P7 | INTACT |
+| MIG-017 | Testcontainers PostgreSQL infrastructure + BDD Cucumber wiring (SPEC-08) | BE | P8 | INTACT |
+| MIG-018 | BDD — global-and-tenant-migration.feature (SPEC-02, SPEC-07) | BE | P8 | INTACT |
+| MIG-019 | BDD — tenant-provisioning.feature (SPEC-03) | BE | P8 | INTACT |
+| MIG-020 | BDD — forward-only-and-checksum.feature (SPEC-05, SPEC-07) | BE | P8 | INTACT |
+| MIG-021 | BDD — range-registry-guard.feature (SPEC-04, INV-MIG-2) | BE | P8 | INTACT |
+| MIG-022 | CI gate — assert spring.flyway.enabled=false in all business services + no flat V1 in MIG aggregation locations (SPEC-10, INV-MIG-7) | BE | P9 | INTACT |
+| MIG-023 | Dockerfile + docker-compose init service with restart:no (SPEC-07, doc 06 R7) | BE | P9 | INTACT |
+| MIG-024 | Runbook verification — validate setup-local.md commands against implemented runner | BE | P9 | INTACT |
+| INT-MIG-001 | ACS — regenerate V1__create_initial_schema.sql into reserved block V0010-V0012 for MIG aggregation | BE | P3 | INTACT |
+| INT-MIG-002 | PAT — regenerate V1__create_initial_schema.sql into reserved block V0020-V0022 for MIG aggregation | BE | P3 | INTACT |
+| INT-MIG-003 | EDGE — regenerate V1__create_initial_schema.sql into reserved block V0030-V0032 for MIG aggregation | BE | P3 | INTACT |
+| INT-MIG-004 | CONV — regenerate DDL scripts into reserved block V0070-V0079 for MIG aggregation | BE | P3 | INTACT |
+| INT-MIG-005 | EVNT — confirm V0040-V0049 reserved block and deliver EVNT migration scripts for MIG aggregation | BE | P3 | INTACT |
+| INT-MIG-006 | GEST — confirm V0050-V0059 reserved block and deliver GEST migration scripts for MIG aggregation | BE | P3 | INTACT |
+| INT-MIG-007 | HIST — confirm V0060-V0069 reserved block and deliver HIST migration scripts for MIG aggregation | BE | P3 | INTACT |
+| INT-MIG-008 | TRN — confirm V0080-V0089 reserved block and deliver TRN migration scripts for MIG aggregation | BE | P3 | INTACT |
+| TRN-001 | Hexagonal scaffold — Gradle module + four-layer package skeleton + application.yml (Eureka client, EUREKA_URI default http://localhost:8761/eureka, Feign base-url neuroassist.pat/hist/conv.base-url; PAT 8082, HIST 8083, CONV 8085) | BE | P1 | INTACT |
+| TRN-002 | RoleAuthorityPolicy — 12 trn.* authority constants + @EnableMethodSecurity(prePostEnabled=true) (D-642, SPEC-06) | BE | P1 | INTACT |
+| TRN-003 | GET /trn/health — public liveness/readiness endpoint (Actuator, SPEC-07, D-642 public_paths) | BE | P1 | INTACT |
+| TRN-004 | Domain aggregates — TrainingSession (root) + Proposal + Authorization VO (pure POJOs, invariants INV-TRN-1/2 state machine, SPEC-02) | BE | P2 | INTACT |
+| TRN-005 | Domain ports + in-memory fakes — LlmDialogPort, TtsPort, SearchIndexPort, TreePublicationPort, PatientReferencePort, AuditPort + per-port in-memory fake adapter for tests | BE | P2 | INTACT |
+| TRN-006 | SessionService — POST /trn/sessions + GET /trn/sessions/{id}: open session bound to patient, PatientReferencePort resolve (ETag/304), TrainingSessionStarted hard-502 audit (SPEC-01, SPEC-02) | BE | P2 | INTACT |
+| TRN-007 | ProposalService dialog — POST /trn/sessions/{id}/dialog: LlmDialogPort minimised context (patientId + draft text + prompt only, INV-TRN-7), draft/proposed only, untrusted output containment, 503 graceful fallback (SPEC-01, SPEC-02, ADR-004) | BE | P2 | INTACT |
+| TRN-008 | ProposalService lifecycle — GET + PATCH proposals, proposal state machine, POST /withdrawal + POST /rejection sub-resources, 409 proposal-state-locked on illegal transitions (SPEC-01, SPEC-02, ADR-003) | BE | P2 | INTACT |
+| TRN-009 | DualAuthorizationService — caregiver-confirmation + patient-assent domain fact (§4.1/§4.2), distinct-actors guard (INV-TRN-1), 409 dual-authorization-same-actor, ProposalApproved hard-502 audit (SPEC-03, ADR-002) | BE | P2 | INTACT |
+| TRN-010 | Flyway V0080–V0088 — 9 migration scripts: pgcrypto+pg_trgm extensions (global) + 8 tenant tables (training_session, proposal, authorization, consent_record, voice_model, voice_sample, audio_asset, publication, outbound_job) [data-model.md §2] | BE | P3 | INTACT |
+| TRN-011 | Flyway V0089 — IAM seed: insert 12 trn.* authority rows in neuroassist_global + bump model-access version (D-639, data-model.md §4.1, SPEC-06) | BE | P3 | INTACT |
+| TRN-012 | JPA entities — 9 entities with schema-per-tenant, Persistable<UUID>: TrainingSessionEntity, ProposalEntity, AuthorizationEntity, ConsentRecordEntity, VoiceModelEntity, VoiceSampleEntity, AudioAssetEntity, PublicationEntity, OutboundJobEntity (data-model.md §2) | BE | P3 | INTACT |
+| TRN-013 | Repository adapters — Spring Data JPA repos + adapters for 9 entities; TenantContextHolder.require() as first line of every adapter method (RULE-04) | BE | P3 | INTACT |
+| TRN-014 | PatClient Feign + PatientReferencePort adapter — GET /pat/patients/{id}, ETag/304, service-client pat.patient.read, 404 on cross-tenant miss (integration-contracts.md §4, SPEC-10) | BE | P4 | INTACT |
+| TRN-015 | HistClient Feign + AuditPort adapter — hard-502 for TrainingSessionStarted/ConsentGranted/ProposalApproved/ContentPublished; commit+durable-retry for ConsentRevoked/VoiceModelDeleted/ContentErased (event-contracts.md §2, ADR-007, SPEC-10) | BE | P4 | INTACT |
+| TRN-016 | ConvClient Feign + TreePublicationPort adapter — POST /conv/trees + POST :retire + DELETE .../audio; exact shapes from integration-contracts.md §4.1; idempotency trn:publish:<approvalId> (SPEC-10) | BE | P4 | INTACT |
+| TRN-017 | AnthropicLlmDialogAdapter — minimised context (patientId + draft text + prompt only, INV-TRN-7), validate untrusted output cannot exceed draft/proposed (INV-TRN-2), 503 graceful degradation, no raw transcript stored (ADR-004, integration-contracts.md §1) | BE | P4 | INTACT |
+| TRN-018 | ElevenLabsTtsAdapter + per-subject key — consent-gated (INV-TRN-3), voice sample/model refs under per-subject crypto key, outbound_job synthesize durable retry, no partial publish (INV-TRN-4) (SPEC-11, ADR-005, integration-contracts.md §2) | BE | P4 | INTACT |
+| TRN-019 | ElasticsearchSearchIndexAdapter — approved-only (INV-TRN-5), tenant-scoped (INV-TRN-8), non-blocking durable retry, pg_trgm fallback when ES degraded (ADR-006, integration-contracts.md §3, SPEC-10) | BE | P4 | INTACT |
+| TRN-020 | SecurityConfig + OAuth2 resource server — ACS JWKS, JwtAuthenticationConverter mapping authorities claim, @EnableMethodSecurity(prePostEnabled=true), public /trn/health, patient-session token rejected 403 on all /trn endpoints (D-642, SPEC-06) | BE | P5 | INTACT |
+| TRN-021 | TenantContextFilter + ServiceClientTokenProvider — TenantContextFilter registered after BearerTokenAuthenticationFilter (RULE-04); TenantContextHolder.require() first line in every application service; ServiceClientTokenProvider for CONV/PAT/HIST calls (SPEC-06) | BE | P5 | INTACT |
+| TRN-022 | MethodSecurityEnforcementIT — integration test proving @PreAuthorize per endpoint, patient-session token rejected 403 on all /trn endpoints, /trn/health bypasses auth (D-642, SPEC-06) | BE | P5 | INTACT |
+| TRN-023 | ConsentService + OutboundJobDispatcher — consent capture (ConsentGranted hard-502) + revoke (ConsentRevoked commit+durable-retry); broker-free scheduler for 6 job_types (synthesize/index/publish/retire/erase_conv_audio/audit) with idempotency per (tenant_id, job_type, idempotency_key) (SPEC-11, ADR-005/007) | BE | P6 | INTACT |
+| TRN-024 | SynthesizeAndPublishService + PublicationService — POST /trn/proposals/{id}/publication: consent-gate + TtsPort synthesis per phrase + audio_asset manifest + SearchIndexPort + TreePublicationPort (trn:publish:<approvalId>), 202 Accepted, INV-TRN-4 no dangling asset, INV-TRN-6 idempotency (SPEC-01, SPEC-11, SPEC-05) | BE | P6 | INTACT |
+| TRN-025 | EraseContentService — DELETE /trn/patients/{id}/content: ElevenLabs model delete + per-subject key crypto-shred + mark voice_model/voice_sample/audio_asset erased + enqueue conv.tree-version.retire + conv.audio.delete + audit VoiceModelDeleted/ContentErased (commit+durable-retry), idempotent 202 (SPEC-11, ADR-005/006/007, INV-TRN-9) | BE | P6 | INTACT |
+| TRN-026 | CorrelationIdInterceptor + privacy log filter + Actuator metrics — X-Correlation-Id propagation to all downstream calls; outbound_job depth/attempts/failures by job_type; vendor latency/error counters per port; never log PHI/LLM content/voice data (SPEC-07, ADR-004/005) | BE | P7 | INTACT |
+| TRN-027 | BDD scaffold — 6 feature files (training-session, assistant-dialog, dual-authorization, consent-and-synthesis, publish-and-idempotency, erasure) + SharedSteps + 6 per-feature step classes in scaffold format + CucumberSpringContext (SPEC-08, D-532) | BE | P8 | INTACT |
+| TRN-028 | BDD scenarios — full Gherkin coverage: session open/PAT-resolve/hard-502-rollback, dialog minimisation/503-resumable, dual-auth distinct-actors/ProposalApproved/guardian-substitute, consent-gate synthesis/no-partial-publish, idempotent publish/ES-down non-blocking, crypto-shred erasure never-blocked (SPEC-08) | BE | P8 | INTACT |
+| TRN-029 | Idempotency hardening — publication unique on (tenant_id, approval_id) + (tenant_id, idempotency_key); outbound_job unique on (tenant_id, job_type, idempotency_key); INV-TRN-6 single-active guard; replay detection returning existing record (SPEC-05, data-model.md §2.8/§2.9) | BE | P9 | INTACT |
+| INT-TRN-001 | INT-TRN-1 — TRN service-client token must carry conv.tree.publish, conv.tree-version.retire, conv.audio.delete, hist.audit.record, pat.patient.read (ACS obligation, closes TRN side of CONV INT-CONV-2) | BE | P4 | INTACT |
+| INT-TRN-002 | INT-TRN-2 — TRN publish gated on complete dual-authorization (INV-TRN-1); publish body carries sourceVersionRef=trn:approval:<approvalId> (closes TRN side of CONV INT-CONV-5) | BE | P4 | INTACT |
+| INT-TRN-003 | INT-TRN-3 — ConsentGranted audited hard-502 and durable before any TtsPort call; synthesis refused 409 consent-required without granted consent (INV-TRN-3, TRN-internal / CONV boundary) | BE | P5 | INTACT |
+| INT-TRN-004 | INT-TRN-4 — Erasure propagates to CONV (retire + erase audio) and HIST (commit+durable-retry); HIST/CONV outage must not block local crypto-shred (INV-TRN-9, ADR-005/006/007) | BE | P6 | INTACT |
+| GWY-001 | Gradle module scaffold — build.gradle.kts, Spring Cloud Gateway WebFlux, integrationTest source set | BE | P1 | INTACT |
+| GWY-002 | Route table R1..R8 in application.yml — eight lb:// routes, no StripPrefix, confirmed ports (R8 trn-service 8089 confirmed) | BE | P1 | INTACT |
+| GWY-003 | SecurityConfig (WebFlux) — @EnableWebFluxSecurity, SecurityWebFilterChain, public_paths permitAll, anyExchange authenticated (framework gap §7) | BE | P2 | INTACT |
+| GWY-004 | Multi-issuer JWT — ReactiveAuthenticationManagerResolver, ACS + EDGE jwk-set-uri, exp-less validator (Risk R2), 401 proof test (D-642) | BE | P2 | INTACT |
+| GWY-005 | CorrelationIdFilter — global WebFilter, generate UUID if absent, preserve inbound, set MDC, forward header, echo on response | BE | P2 | INTACT |
+| GWY-006 | TenantHeaderStripFilter — strip X-Tenant-Id (and tenant-ish variants) before forwarding (ADR-003, INV-G3) | BE | P2 | INTACT |
+| GWY-007 | Eureka client config — defaultZone env fallback, prefer-ip-address, discovery.locator.enabled=false (explicit routes only) | BE | P4 | INTACT |
+| GWY-008 | CorsWebFilter — explicit caregiver-shell origin allow-list, never wildcard+credentials, exposed X-Correlation-Id (ADR-004, Risk R6) | BE | P5 | INTACT |
+| GWY-009 | In-memory rate limiting — login bucket (POST /acs/auth/login) + pairing bucket (POST /edge/devices/pair), 429, per-IP key (ADR-005) | BE | P5 | INTACT |
+| GWY-010 | PHI-free access log filter — emit method, route template, status, latency, correlationId ONLY; never body/params/identifiers (INV-G1, ADR-007) | BE | P7 | INTACT |
+| GWY-011 | RFC 7807 ProblemDetail error handler — PHI-free bodies for 401/429/502/503/504 with correlationId field, no token content | BE | P7 | INTACT |
+| GWY-012 | Actuator + Prometheus — expose /actuator/health and /actuator/prometheus only, restrict all others (ADR-007) | BE | P7 | INTACT |
+| GWY-013 | Per-route circuit breaker + connect/response timeouts — resilience4j per downstream, 503 fallback when open, 504 on response timeout | BE | P9 | INTACT |
+| GWY-014 | Idempotent-only retry — GET only via retry filter, never login/pairing/event-report POST (ADR-006, Risk R8) | BE | P9 | INTACT |
+| GWY-015 | BaseIntegrationTest — WebFlux @SpringBootTest RANDOM_PORT, WireMock stubs for all eight downstream services | BE | P8 | INTACT |
+| GWY-016 | BDD routing.feature step definitions — R1..R8 path forwarding, no route to REG/MIG/DASH, full-path forward (SPEC-01, SPEC-02) | BE | P8 | INTACT |
+| GWY-017 | BDD public-vs-authenticated.feature step definitions — 401 without token, EDGE-signed admitted, no-exp patient-session admitted, D-642 (SPEC-03, SPEC-06) | BE | P8 | INTACT |
+| GWY-018 | BDD rate-limit-429 + correlation-id + tenant-header-stripping + cors-preflight step definitions (SPEC-06, SPEC-07) | BE | P8 | INTACT |
+| GWY-019 | ArchUnit MODULE constant = gateway and package-layer annotation enforcement | BE | P9 | INTACT |
+| GWY-020 | Dockerfile + docker-compose service entry — port 8080, startup order depends_on REG | BE | P9 | INTACT |
+| GWY-021 | Runbook verification — validate setup-local.md startup sequence, health check, and proxy-call curl commands | BE | P9 | INTACT |
+| INT-GWY-001 | ACS — confirm GET /acs/.well-known/jwks.json exact path and iss claim value for GWY ReactiveAuthenticationManagerResolver routing key | BE | P2 | INTACT |
+| INT-GWY-002 | EDGE — confirm GET /edge/.well-known/jwks.json exact path and iss claim value for GWY ReactiveAuthenticationManagerResolver routing key | BE | P2 | INTACT |
+| INT-GWY-003 | REG — confirm GWY registers with Eureka on startup and lb:// routes resolve for all eight business services (closes INT-REG-001 GWY side) | BE | P4 | INTACT |

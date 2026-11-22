@@ -1,0 +1,166 @@
+# generator-config.yml — TRN (frontend)
+# Input for the Nx module generator consumed by /fe-architect-promote (D-493) and /fe-architect-scaffold.
+# Emitted by /fe-architect-specs neuroassist-niv TRN.
+# Sources: frontend/01-06 + adr/ADR-005 (+ Specs amendment: single caregiver identity) + adr/ADR-007
+#          (BE-mediated LLM/TTS, fail-safe), BE contracts/api-contract.md (§2-§7, §10 authority matrix),
+#          BE data-model.md (proposal lifecycle, authorization VO), BE integration-contracts.md (INT-TRN-1..4),
+#          frontend-spec/SPEC-01..08, contracts/backend-api-cross-link.md.
+# ORCHESTRATOR DECISION: the patient/guardian assent is an IN-SESSION domain fact attested under the
+# CAREGIVER authority (ADR-002 Option C; POST /trn/proposals/{pid}/patient-assent needs trn.proposal.approve
+# on the caregiver token). ACS INV-3 is untouched: no trn.proposal.confirm, no patient-session token — TRN
+# runs under ONE caregiver identity (the FE ADR-005 dual-identity wording is amended, status stays aceita).
+
+module: trn
+issue_prefix: NEUR                                # project issuePrefix (project-context.json)
+npm_scope: "@neuroassist"
+shell_route: /training                            # Screen 08 authoring route (SPEC-01 §1)
+app: neuroassist-niv-web                          # caregiver web Shell — DECIDED (both surfaces run under the caregiver JWT)
+entry_lib: frontend/libs/trn                      # importPath @neuroassist/trn — bare name, house convention (shared ADR-006; registry label "trn-ui" to be reconciled)
+state_management: signals                         # no NgRx; signal/computed + .asReadonly(); server-authoritative
+module_type: collaborative-authoring             # write-heavy, server-authoritative; no offline cache (opposite of CONV runtime)
+
+# ── Features (frontend/libs/trn/feature-*) ─────────────────────────────────────
+features:
+  - name: training                                # Screen 08 — caregiver training session
+    routes: [/training]
+    components: [TrainingSessionPageComponent, TrainingBadgeComponent, ChatConversationPanelComponent, ConsentGateBannerComponent, ProposedNodeListComponent, ProposedNodeCardComponent, AudioPreviewButtonComponent, EndSessionButtonComponent]
+  - name: patient-assent                          # Screen 09 — assisted patient-assent (caregiver session)
+    routes: [/training/assent]
+    components: [PatientAssentPageComponent, PendingAssentListComponent, AssentNodeCardComponent, ChannelBadgeComponent, AssentEvidenceFormComponent, ScanCursorComponent]
+
+# ── Data access — ports consumed EXACTLY as published by trn-service (SPEC-04) ──
+# base ${ACCESS_HTTP_BASE}/trn (NEVER /api/v1). Default adapter 'http' (trn-service specified, M1.5).
+data_access:
+  - resource: TrainingSession
+    base_path: /trn/sessions                      # POST create (trn.session.create); GET /{id} (trn.session.read); POST /{id}/dialog (trn.proposal.update)
+    operations: [create, get, dialog]
+    port: TRAINING_SESSION_PORT
+    cache: none
+  - resource: Proposal
+    base_path: /trn/sessions/{sessionId}/proposals # GET/PATCH proposal; + proposal-scoped confirmation/assent/rejection/withdrawal under /trn/proposals/{proposalId}
+    operations: [get, update, caregiver-confirmation, patient-assent, rejection, withdrawal]
+    port: PROPOSAL_PORT
+    cache: none
+  - resource: Consent
+    base_path: /trn/consents                      # POST create (trn.consent.create); GET /trn/patients/{id}/consent (trn.consent.read); POST /{id}/revocation (trn.consent.revoke)
+    operations: [create, get, revocation]
+    port: CONSENT_PORT
+    cache: none
+  - resource: Publication
+    base_path: /trn/proposals/{proposalId}/publication  # POST create 202 (trn.publication.create); GET /trn/publications/{id} (trn.publication.read)
+    operations: [create, get]
+    port: PUBLICATION_PORT
+    cache: none
+  - resource: Content
+    base_path: /trn/patients/{patientId}/content  # DELETE erasure 202 (trn.content.delete)
+    operations: [delete]
+    port: CONTENT_PORT
+    cache: none
+
+adapter_default: http                             # carry-forward scaffold:mock-adapter-default — default MUST be http (trn-service specified); Mock serves the same <Wire> shape via the same mappers; providers spec proves default http
+
+# ── Ports / seams ──────────────────────────────────────────────────────────────
+ports:
+  - name: TRAINING_SESSION_PORT
+    default_impl: TrainingSessionHttpAdapter
+  - name: PROPOSAL_PORT
+    default_impl: ProposalHttpAdapter
+  - name: CONSENT_PORT
+    default_impl: ConsentHttpAdapter
+  - name: PUBLICATION_PORT
+    default_impl: PublicationHttpAdapter
+  - name: CONTENT_PORT
+    default_impl: ContentHttpAdapter
+  - name: NAVIGATION_INTENT_PORT                  # OPTIONAL — only if the assent surface is later mounted in a Patient-Mode host (G1); default no-op (touch + switch-scan work without a host)
+    default_impl: NoOpNavigationIntentPort
+    provider: host
+
+# ── Access (frontend/libs/trn/access) ──────────────────────────────────────────
+guards:
+  - caregiverAuthoringGuard                       # /training + /training/assent; decides from the REAL caregiver session (auth-session); fine-grained trn.* refinement deferred to the PLATFORM/frontend routeGuards ledger item (access-decision is a Wave-0 stub). NEVER a hardcoded true (guard:stub-permissive). NO patient-session guard.
+
+# ── Module contract (trn.contract.ts) — caregiver authorities only (D-639) ──────
+module_contract:
+  key: trn
+  label: Training
+  icon: school
+  section: care                                   # caregiver web Shell (beside DASH)
+  order: 40
+  identity: caregiver.jwt                         # ACS caregiver JWT — the ONLY TRN identity
+  permissions:                                    # verbatim from BE api-contract §10 / data-model §4.1 / permission-catalogue trn module (12 authorities)
+    - trn.session.create
+    - trn.session.read
+    - trn.proposal.read
+    - trn.proposal.update
+    - trn.proposal.approve                        # caregiver confirmation AND in-session patient/guardian assent (ADR-002)
+    - trn.proposal.reject
+    - trn.publication.create
+    - trn.publication.read
+    - trn.consent.create
+    - trn.consent.read
+    - trn.consent.revoke
+    - trn.content.delete
+  # NO trn.proposal.confirm, NO patient-session authority (ACS INV-3 untouched). Outbound conv.*/hist.*/pat.* are trn-service service-client authorities held server-side (INT-TRN-1), not FE UI authorities.
+  feature_flags:
+    trn.switch-scan.enabled: on                   # switch-scan channel on the assisted assent surface; host/profile-configurable timing (ADR-007, reused from CONV)
+    trn.audio-preview.enabled: on                 # caregiver preview; resolves BE clip -> device TTS -> large text (no pre-publication clip endpoint in v1 -> INT-FE-TRN-1)
+
+# ── Cross-module writes ─────────────────────────────────────────────────────────
+delegations: []                                   # TRN writes only its own trn-service resources; publish/retire/erase to CONV are trn-service service-client calls, server-side (no FE delegation)
+
+# ── INT items — FE requests to the BE (SPEC-04 §5; cross-link §3) ───────────────
+integration_requests:
+  - id: INT-FE-TRN-1
+    owner_module: trn                             # trn-service (BE)
+    add_export: "A pre-publication audio-preview read (e.g. GET /trn/proposals/{id}/preview-audio) so the caregiver can hear a proposal in the patient's cloned voice BEFORE publication"
+    reason: "BE api-contract exposes no preview endpoint — synthesis happens only at publication (§6). Until one lands, preview degrades to device TTS/large text (SPEC-07 §3). Proposed, not assumed (no invented URL)."
+    blocking: false                               # the fail-safe cascade covers it
+  - id: INT-FE-TRN-2
+    owner_module: trn                             # trn-service (BE)
+    add_export: "A per-proposal short-variations read for the assent surface Adjust action (short LLM-suggested variations, not free text)"
+    reason: "The only LLM surface is POST .../dialog (§3.1); there is no per-proposal variation endpoint. In v1 Adjust routes to a caregiver PATCH refine that re-enters re-approval (framing Q2). Proposed, not assumed."
+    blocking: false                               # v1 Adjust = caregiver refine
+
+# ── Upstream BE INT items consumed server-side (no FE surface) ──────────────────
+upstream_backend_int:
+  - "INT-TRN-1 — ACS issues the TRN service-client token with conv.tree.publish, conv.tree-version.retire, conv.audio.delete, hist.audit.record, pat.patient.read (closes CONV INT-CONV-2)."
+  - "INT-TRN-2 — trn-service publishes to CONV only after dual authorization, carrying sourceVersionRef=trn:approval:<approvalId> (closes CONV INT-CONV-5)."
+  - "INT-TRN-3 — consent captured + durable (ConsentGranted hard-502) before any synthesis."
+  - "INT-TRN-4 — erasure propagates to CONV retire/erase, never blocked by a HIST/CONV outage."
+
+# ── Shell surfaces (SPEC-06) ────────────────────────────────────────────────────
+shell_surfaces:
+  - TrainingDestination                           # /training menu entry (section 'care', order 40) — requires trn.session.read
+  - PatientAssentSubRoute                          # /training/assent reached from within /training (caregiver session)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ────────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/access-http-base"        # base ${ACCESS_HTTP_BASE}; correlation + error-normalize interceptors
+  - "@neuroassist/shared/access-decision"         # Wave-0 stub (interface only) — authority refinement deferred to PLATFORM/frontend routeGuards
+  - "@neuroassist/shared/auth-session"            # caregiver-session identity read by caregiverAuthoringGuard
+  - "@neuroassist/shared/error-model"             # ProblemDetail -> AppError (BE §9 type slugs -> SPEC-07 §2)
+  - "@neuroassist/shared/observability"           # session/turn latency, approve/assent/publish outcomes, preview source; no proposal-text PII
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-feedback"             # calm banners (session-ended, same-actor, incomplete-consent); erase modal only
+  - "@neuroassist/shared/ui-tokens"               # Tailwind v4 oklch tokens; dark default; large targets for ALS/MND on the assent surface
+
+extra_dependencies: []                            # no NgRx; Web Speech API (SpeechSynthesis) for the audio-preview fallback
+
+# ── Backend cross-link — consumed verbatim; TRN redefines no BE contract ─────────
+backend_contract: ../../../../../backend/services/trn-service/contracts/api-contract.md
+
+# ── Open items ──────────────────────────────────────────────────────────────────
+open_items:
+  - "ADR-005 amendment (Specs): the FE vision assumed TWO identities (caregiver JWT + patient-session token with trn.proposal.confirm). Superseded — ACS INV-3 is untouched, the patient assent is an in-session domain fact under the caregiver trn.proposal.approve authority (ADR-002 Option C). TRN runs under one caregiver identity."
+  - "G1 Patient-Mode host is OPTIONAL for TRN (unlike CONV/GEST): both surfaces run in the caregiver web Shell today. The assent surface is host-portable so it CAN later mount in the Patient-Mode host, but that is not required for v1."
+  - "registry label modules.registry[TRN].frontendLib = 'trn-ui' vs verified on-disk convention @neuroassist/trn (libs/trn) — reconcile in promote (CONV precedent: fix project-context.json modules.registry[TRN].frontendLib)."
+  - "shared/access-decision is a Wave-0 stub; caregiverAuthoringGuard is stub-permissive at the PLATFORM/frontend routeGuards level until fleshed out — never a hardcoded true."
+  - "INT-FE-TRN-1 (no pre-publication audio-preview endpoint) and INT-FE-TRN-2 (no Adjust short-variations endpoint) — FE requests to the BE; non-blocking, preview/adjust degrade honestly."
+  - "CONV SPEC-01 renders a 'N phrases to confirm' banner linking to /patient/confirm-training (a patient-mode route). Under this decision the patient assent is caregiver-driven in-session, so that patient-facing link is a cross-module reconcile item (owner CONV; TRN edits no CONV doc)."
+
+# ── E2E ─────────────────────────────────────────────────────────────────────────
+e2e:
+  project: trn-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/trn/frontend/e2e/
