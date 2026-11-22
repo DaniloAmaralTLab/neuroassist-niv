@@ -1,0 +1,82 @@
+service: conv-service
+type: standard
+port: 8085
+issue_prefix: CONV
+base_path: /conv
+
+domain:
+  aggregates:
+    - PublishedTree
+  entities:
+    - TreeVersion
+    - Category
+    - Phrase
+    - AudioAsset
+    - UsageSignal
+
+# D-642: endpoints reachable WITHOUT a token (SecurityConfig permitAll).
+# CONV has no anonymous surface other than health; publish/erase are TRN service-client,
+# station reads are patient-session (ACS INV-3). public_operations therefore omitted below.
+public_paths:
+  - GET /conv/health
+
+application_services:
+  - name: TreeService
+    path: /tree
+    resource: tree
+    operations:
+      - get        # -> conv.tree.read      (D-639: read is an action, not an op verb)
+      - publish    # -> conv.tree.publish   (TRN service-client; supersede is a side-effect, no own authority)
+  - name: AudioService
+    path: /audio
+    resource: audio
+    operations:
+      - get        # -> conv.audio.read     (patient-session; immutable cacheable URLs)
+      - delete     # -> conv.audio.delete   (TRN service-client; erase = crypto-shred, ADR-005/006)
+  - name: UsageService
+    path: /usage-signals
+    resource: usage
+    operations:
+      - record     # -> conv.usage.record   (patient-session; opt-in, no free text, INV-CONV-6)
+  - name: TreeVersionService
+    path: /tree-versions
+    resource: tree-version
+    operations:
+      - retire     # -> conv.tree-version.retire  (TRN service-client; = withdraw a version)
+
+# Derived authorities (D-639/D-640/D-641 — <base>.<resource>.<action>, English verb table only):
+#   conv.tree.read            (get   -> read)
+#   conv.tree.publish         (publish)
+#   conv.audio.read           (get   -> read)
+#   conv.audio.delete         (delete)
+#   conv.usage.record         (record)
+#   conv.tree-version.retire  (retire)
+# Token split (ACS INV-3): patient-session -> {conv.tree.read, conv.audio.read, conv.usage.record};
+#                          TRN service-client -> {conv.tree.publish, conv.tree-version.retire, conv.audio.delete}.
+
+enums:
+  TreeVersionStatus:
+    - active
+    - superseded
+    - withdrawn
+
+feign_clients:
+  - name: PatClient
+    service: pat-service
+    url_prop: neuroassist.pat.base-url
+  - name: HistClient
+    service: hist-service
+    url_prop: neuroassist.hist.base-url
+
+consumed_events: []
+
+events:
+  published: []
+
+outbound_ports:
+  - PublishedTreeRepositoryPort
+  - AudioAssetPort
+  - SearchPort
+  - PatientReferencePort
+  - AuditPort
+  - UsagePort

@@ -1,0 +1,23 @@
+{
+  "name": "acs",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/acs/src",
+  "projectType": "library",
+  "tags": ["scope:acs", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/acs/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/acs"],
+      "options": {
+        "jestConfig": "libs/acs/jest.config.ts"
+      }
+    }
+  }
+}

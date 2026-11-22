@@ -1,0 +1,37 @@
+@startuml acs-c4-context
+' C4 Context — ACS (Caregivers and Access), NeuroAssist NIV
+!define RECTANGLE class
+
+title ACS — System Context
+
+actor "Family Caregiver\n(CAREGIVER)" as caregiver
+actor "Clinic Coordinator\n(CLINIC_COORDINATOR)" as coordinator
+actor "platform-ops\n(service client, tenantless)" as ops
+
+rectangle "acs-service\n(Authorization Server:\ncaregiver identity, roles,\nlinks, patient sessions, JWT)" as acs #LightBlue
+
+rectangle "API Gateway (GWY)" as gwy
+rectangle "HIST (hist-service)\naudit trail" as hist
+rectangle "MIG (migrations)\ncentral Flyway" as mig
+rectangle "Resource servers\n(PAT, EVNT, GEST, EDGE,\nDASH, CONV, TRN, HIST)" as rs
+rectangle "PAT (pat-service)\nowns Patient" as pat
+rectangle "EDGE (edge-service)\nowns device identity" as edge
+
+caregiver --> gwy : login, manage links,\nprovision/revoke sessions
+coordinator --> gwy : + create/deactivate caregivers
+ops --> gwy : onboard tenant
+gwy --> acs : routes /acs/** (JWT validated)
+
+acs --> hist : audit grant/revoke/link\n(sync REST)
+acs --> mig : authors migrations\n(applied centrally)
+rs --> acs : validate JWT (JWKS / introspect)
+acs ..> pat : references Patient by id
+acs ..> edge : references device by id,\nvalidates (not mints) edge token
+
+note bottom of acs
+  Messaging disabled (all sync REST).
+  No TechLab AI hub (ai.hasAi = false).
+  Internal network only (OPS-002); TLS outside localhost (TECH-006).
+end note
+
+@enduml

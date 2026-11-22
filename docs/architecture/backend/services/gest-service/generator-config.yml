@@ -1,0 +1,62 @@
+service: gest-service
+type: standard
+port: 8088
+issue_prefix: GEST
+base_path: /gest
+schema: global
+schema_name: neuroassist_global
+
+domain:
+  aggregates:
+    - EngineVersion
+    - EngineCapability
+
+enums:
+  SupportStatus:
+    - supported
+    - experimental
+    - unsupported
+  EngineStatus:
+    - active
+    - deprecated
+
+application_services:
+  - name: EngineVersionService
+    path: /engines
+    resource: engine
+    operations:
+      - list
+      - get
+      - register
+      - deprecate
+  - name: CapabilityService
+    path: /capabilities
+    resource: capability
+    operations:
+      - list
+      - get
+      - declare
+      - retire
+      - checkSupport
+
+feign_clients:
+  - name: AcsClient
+    service: acs-service
+    url_prop: acs.base-url
+  - name: PatGestureTypeClient
+    service: pat-service
+    url_prop: pat.base-url
+  - name: HistAuditClient
+    service: hist-service
+    url_prop: hist.base-url
+
+consumed_events: []
+
+events:
+  published: []
+
+outbound_ports:
+  - TokenValidationPort
+  - AcsIntrospectionPort
+  - GestureVocabularyPort
+  - HistAuditPort

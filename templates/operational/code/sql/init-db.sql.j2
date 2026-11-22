@@ -1,0 +1,17 @@
+{#-
+  init-db.sql.j2 — Local dev tenant schema initialization.
+
+  Variables (passed): db_user, meta
+-#}
+-- scripts/init-db.sql
+-- Initializes tenant schemas for local development
+
+-- Development tenant schema
+CREATE SCHEMA IF NOT EXISTS t_emp_dev;
+GRANT ALL PRIVILEGES ON SCHEMA t_emp_dev TO {{ db_user }};
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA t_emp_dev TO {{ db_user }};
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA t_emp_dev TO {{ db_user }};
+
+-- Schema for second-tenant isolation (multi-tenancy tests)
+CREATE SCHEMA IF NOT EXISTS t_emp_test;
+GRANT ALL PRIVILEGES ON SCHEMA t_emp_test TO {{ db_user }};

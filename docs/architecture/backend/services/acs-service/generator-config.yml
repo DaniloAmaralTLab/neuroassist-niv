@@ -1,0 +1,83 @@
+service: acs-service
+type: standard
+port: 8081
+
+domain:
+  aggregates:
+    - Tenant
+    - Caregiver
+    - PatientSession
+    - JwtBlacklist
+  entities:
+    - CaregiverIdentityLookup
+    - CaregiverPatientLink
+
+enums:
+  TenantType:
+    - family
+    - clinic
+  CaregiverRole:
+    - caregiver
+    - clinic_coordinator
+  CaregiverStatus:
+    - active
+    - deactivated
+  SessionStatus:
+    - active
+    - revoked
+
+# D-642: endpoints reachable WITHOUT a token (SecurityConfig permitAll)
+public_paths:
+  - POST /acs/auth/login
+  - GET /acs/.well-known/jwks.json
+
+application_services:
+  - name: AuthService
+    operations:
+      - authenticate
+      - introspect
+      - getJwks
+    public_operations:   # D-642: no @PreAuthorize (anonymous / code-authenticated)
+      - authenticate
+      - getJwks
+  - name: CaregiverService
+    operations:
+      - register
+      - deactivate
+      - getProfile
+  - name: PatientLinkService
+    operations:
+      - link
+      - unlink
+      - listLinks
+  - name: PatientSessionService
+    operations:
+      - provision
+      - revoke
+      - findById
+  - name: TenantService
+    operations:
+      - onboard
+
+feign_clients:
+  - name: HistClient
+    service: hist-service
+    url_prop: neuroassist.hist.base-url
+
+consumed_events: []
+
+events:
+  published:
+    - com.neuroassist.acs.event.TenantOnboarded
+    - com.neuroassist.acs.event.CaregiverRegistered
+    - com.neuroassist.acs.event.CaregiverDeactivated
+    - com.neuroassist.acs.event.CaregiverAuthenticated
+    - com.neuroassist.acs.event.PatientLinked
+    - com.neuroassist.acs.event.PatientUnlinked
+    - com.neuroassist.acs.event.PatientSessionProvisioned
+    - com.neuroassist.acs.event.PatientSessionRevoked
+
+outbound_ports:
+  - HistAuditPort
+  - TokenIssuerPort
+  - TokenBlacklistPort

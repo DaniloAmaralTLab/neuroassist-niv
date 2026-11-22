@@ -1,0 +1,39 @@
+@startuml edge-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Component.puml
+title EDGE — Component (hexagonal, key hexagonal_java)
+
+Container_Boundary(api, "edge-service (com.neuroassist.edge)") {
+
+  Component(ctl, "api/", "Spring Web", "DeviceController (enroll/read/activate/deactivate/unpair/revoke), PairingController (/edge/devices/pair, code-bearer), HeartbeatController, CatalogController, JwksController, IntrospectionController; DTOs + mappers; @PreAuthorize == RoleAuthorityPolicy")
+
+  Component(app, "application/", "Use-case services", "EnrollDevice, PairDevice, ReactivateDevice, DeactivateDevice, UnpairDevice, RevokeDevice, RecordHeartbeat (+detectionState), EvaluateLiveness (watchdog), EvaluateDetectionLapse (sweep), RaiseDetectionLapse, ResolveDetectionLapse, RefreshCatalog, ReadCatalog, IntrospectDeviceToken; @Transactional; HIST audit orchestration; TenantContextHolder.require()")
+
+  Component(dom, "domain/", "Model + ports", "EdgeDevice aggregate + state machine (+ detectionState, ADR-005), PairingCode VO, CachedCatalog, CredentialRevocation, DetectionLapse; ports: EdgeDeviceRepository, PairingCodeStore, DeviceTokenIssuer, CommandCatalogSource, CachedCatalogStore, RevocationStore, DetectionLapseStore, DetectionLapseNotifier (EVNT), AuditPort, Clock; RoleAuthorityPolicy (authority constants)")
+
+  Component(infra, "infrastructure/", "Adapters", "JPA repos (schema-per-tenant routing); global PairingCodeStore (hashed); DeviceTokenIssuer (sign + /edge JWKS); PAT CommandCatalogSource (service-client, ETag/304); EVNT DetectionLapseNotifier (service-client, idempotent, G6); HIST AuditPort; watchdog + detection-lapse sweep @Scheduled; Spring Security (ACS JWKS resource server + EDGE device-token verifier; TenantContextFilter inside SecurityFilterChain); config")
+}
+
+ContainerDb(db, "PostgreSQL", "global + t_<tenantId>")
+System_Ext(acs, "ACS", "JWKS / introspect / service-client")
+System_Ext(pat, "PAT", "Catalog pull")
+System_Ext(hist, "HIST", "Audit")
+System_Ext(evnt, "EVNT", "Detection-lapse raise/resolve (G6)")
+
+Rel(ctl, app, "invokes use cases")
+Rel(app, dom, "depends on domain + ports")
+Rel(infra, dom, "implements ports (inward dependency)")
+Rel(infra, db, "JPA / JDBC")
+Rel(infra, acs, "JWKS / introspect / client-credentials")
+Rel(infra, pat, "GET commands (If-None-Match)")
+Rel(infra, hist, "POST /audit")
+Rel(infra, evnt, "Raise/resolve detection lapse (service-client)")
+
+note right of dom
+  Dependency rule (ADR hexagonal_java):
+  domain imports nothing outward;
+  application depends on domain;
+  api and infrastructure depend inward.
+  Inbound port signatures never carry tenantId
+  (TenantContextHolder.require() in application).
+end note
+@enduml

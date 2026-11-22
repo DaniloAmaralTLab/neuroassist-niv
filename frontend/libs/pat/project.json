@@ -1,0 +1,23 @@
+{
+  "name": "pat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/pat/src",
+  "projectType": "library",
+  "tags": ["scope:pat", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/pat/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/pat"],
+      "options": {
+        "jestConfig": "libs/pat/jest.config.ts"
+      }
+    }
+  }
+}

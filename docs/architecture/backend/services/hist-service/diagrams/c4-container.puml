@@ -1,0 +1,22 @@
+@startuml hist-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title HIST — Containers
+
+System_Boundary(hist_b, "HIST") {
+  Container(hist, "hist-service", "Java 21 / Spring Boot", "POST /hist/audit (append-only) + GET /hist/... (read model); port 8083")
+  ContainerDb(pg, "PostgreSQL", "schema-per-tenant", "t_<tenantId>.audit_record + audit_subject_key; neuroassist_global.audit_record_global + audit_source + audit_retention_policy")
+}
+
+System_Ext(producers, "Producers", "ACS, PAT, EDGE, EVNT, GEST (service-client)")
+System_Ext(dash, "DASH + caregiver dashboard", "history reader")
+System_Ext(acs, "ACS", "JWKS / service-client identity")
+System_Ext(gwy, "GWY (API Gateway)", "injects X-Correlation-Id")
+System_Ext(mig, "MIG", "centralized Flyway")
+
+Rel(producers, hist, "POST /hist/audit", "sync REST, TLS")
+Rel(dash, hist, "GET /hist/patients/{id}/history", "sync REST")
+Rel(gwy, hist, "routes external traffic", "sync REST")
+Rel(hist, pg, "INSERT/SELECT (no UPDATE/DELETE on audit tables)", "JDBC")
+Rel(hist, acs, "JWT validation", "JWKS")
+Rel(mig, pg, "applies V0060-V0069 across all schemas", "DDL")
+@enduml

@@ -1,0 +1,31 @@
+@startuml evnt-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Context.puml
+title EVNT - System Context (Events and Alarms, NeuroAssist NIV)
+
+Person(caregiver, "Family Caregiver", "Notified of a help request; confirms an emergency")
+Person(coordinator, "Clinic Coordinator", "Supervises events across the care unit")
+System_Ext(edgeStation, "Edge Station", "Webcam + local detection; reports the recognized commandId (edge.device token)")
+
+System(evnt, "EVNT - evnt-service", "Turns a recognized gesture into a durable Event; pull-based in-app delivery + out-of-band escalation (ADR-005)")
+
+System(dash, "DASH / evnt-ui", "Caregiver dashboard - POLLS the event surface")
+System(edge, "EDGE - edge-service", "edge.device JWKS + introspection")
+System(pat, "PAT - pat-service", "Command catalog - urgency + label")
+System(acs, "ACS - acs-service", "Caregiver JWKS + introspection + patient links (+ phone/consent TODO INT-EVNT-ACS-001)")
+System(hist, "HIST - hist-service", "Append-only audit sink")
+System_Ext(pushsvc, "Web Push service", "VAPID - Tier 0 out-of-band")
+System_Ext(eum, "AWS End User Messaging", "SMS (Tier 1) + Voice (Tier 2), selected Region")
+
+Rel(edgeStation, evnt, "POST /evnt/gesture-reports", "edge.device token / evnt.event.ingest")
+Rel(caregiver, dash, "Views alarm / confirms")
+Rel(coordinator, dash, "Supervises")
+Rel(dash, evnt, "POLLS active-alarm + events; confirm; feedback", "caregiver JWT")
+Rel(evnt, edge, "Verify device token (JWKS + introspect)")
+Rel(evnt, pat, "GET /pat/commands/{id} - snapshot urgency+label", "service-client")
+Rel(evnt, acs, "JWKS + introspect + caregiver links")
+Rel(evnt, hist, "POST /audit - EventGenerated / AlarmConfirmed / FeedbackRecorded / EscalationAttempted", "service-client")
+Rel(evnt, pushsvc, "Web Push (VAPID) - Tier 0", "EmergencyNotificationPort")
+Rel(evnt, eum, "SMS / Voice - Tier 1/2 while unconfirmed", "EmergencyNotificationPort")
+
+SHOW_LEGEND()
+@enduml

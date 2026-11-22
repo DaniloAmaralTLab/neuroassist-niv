@@ -1,0 +1,30 @@
+@startuml gest-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title GEST — System Context (detection-engine capability registry)
+
+Person(admin, "Clinic admin / coordinator", "Declares & retires engine capabilities as model versions ship")
+System_Boundary(station, "Patient Station (gest-ui, edge runtime)") {
+  System(stationApp, "Station app", "On-device detection; reads GEST to gate 'detectable' (edge.device token)")
+}
+
+System(gest, "gest-service (GEST)", "Advisory, read-mostly global registry: which GestureType codes each engine version detects (INV-PAT-6 truth)")
+
+System_Ext(acs, "ACS", "Identity / JWKS / introspection (resource-server trust)")
+System_Ext(pat, "PAT", "Global GestureType vocabulary + Command catalog (owner of INV-PAT-6)")
+System_Ext(hist, "HIST", "Audit sink (sync REST)")
+System_Ext(dash, "DASH", "Caregiver dashboards — surfaces 'not yet detectable'")
+
+Rel(admin, gest, "Declare / retire capabilities", "HTTPS /gest (caregiver JWT)")
+Rel(stationApp, gest, "support-check (detectable gate)", "HTTPS /gest/capabilities/support-check (edge.device token)")
+Rel(pat, gest, "Reads capability to warn on mapping", "HTTPS /gest/capabilities (INT-GEST-PAT-2)")
+Rel(dash, gest, "Reads capability", "HTTPS /gest/capabilities")
+Rel(gest, acs, "Validate JWT / introspect (writes)", "JWKS + /acs/auth/introspect")
+Rel(gest, pat, "Validate gestureTypeCode on declare", "GET /pat/gesture-types (INV-GEST-1)")
+Rel(gest, hist, "Audit writes", "Sync REST envelope")
+
+note right of gest
+  Global schema neuroassist_global (INV-GEST-3).
+  No tenant scoping; no broker (messaging disabled).
+  No dependency to/from EDGE or EVNT.
+end note
+@enduml

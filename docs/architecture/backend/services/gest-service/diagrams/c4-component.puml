@@ -1,0 +1,40 @@
+@startuml gest-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title GEST — Components (hexagonal: api / application / domain / infrastructure)
+
+Container_Boundary(api, "api") {
+  Component(engineCtl, "EngineController", "Spring @RestController", "/gest/engines — gest.engine.*")
+  Component(capCtl, "CapabilityController", "Spring @RestController", "/gest/capabilities + support-check — gest.capability.*")
+  Component(dto, "DTOs + mappers", "Java", "request/response ↔ domain")
+}
+Container_Boundary(application, "application") {
+  Component(engineSvc, "EngineVersionService", "@Transactional", "register / deprecate / read (D-640)")
+  Component(capSvc, "CapabilityService", "@Transactional", "declare / retire / read / checkSupport (D-640)")
+}
+Container_Boundary(domain, "domain") {
+  Component(engine, "EngineVersion", "Aggregate", "version, status (active/deprecated)")
+  Component(cap, "EngineCapability", "Aggregate", "(engineVersionId, gestureTypeCode) → SupportStatus")
+  Component(ports, "Ports", "Interfaces", "EngineVersionRepository, EngineCapabilityRepository, GestureVocabularyPort, HistAuditPort")
+}
+Container_Boundary(infrastructure, "infrastructure") {
+  Component(jpa, "JPA adapters", "Spring Data", "global-schema repositories")
+  Component(sec, "SecurityConfig", "Spring Security", "ACS JWKS resource server; @PreAuthorize == RoleAuthorityPolicy")
+  Component(patClient, "PatGestureTypeClient", "Feign", "GET /pat/gesture-types (INV-GEST-1)")
+  Component(histAdapter, "HistAuditAdapter", "Feign", "shared audit envelope")
+}
+
+Rel(engineCtl, engineSvc, "calls")
+Rel(capCtl, capSvc, "calls")
+Rel(engineSvc, ports, "uses")
+Rel(capSvc, ports, "uses")
+Rel(engineSvc, engine, "mutates")
+Rel(capSvc, cap, "mutates")
+Rel(jpa, ports, "implements")
+Rel(patClient, ports, "implements GestureVocabularyPort")
+Rel(histAdapter, ports, "implements HistAuditPort")
+
+note bottom of domain
+  Dependency rule (ADR-001-hexagonal-architecture.md, key hexagonal_java):
+  domain imports nothing outward; application → domain; api/infrastructure → inward.
+end note
+@enduml

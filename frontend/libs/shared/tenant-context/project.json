@@ -1,0 +1,9 @@
+{
+  "name": "shared-tenant-context",
+  "projectType": "library",
+  "sourceRoot": "libs/shared/tenant-context/src",
+  "tags": [
+    "type:domain",
+    "scope:shared"
+  ]
+}

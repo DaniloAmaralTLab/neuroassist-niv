@@ -1,0 +1,65 @@
+service: pat-service
+type: standard
+port: 8082
+issue_prefix: PAT
+
+domain:
+  aggregates:
+    - GestureType
+    - Patient
+  entities:
+    - Command
+
+enums:
+  PatientStatus:
+    - active
+    - inactive
+  CommandStatus:
+    - active
+    - retired
+  Urgency:
+    - emergency
+    - routine
+  Sensitivity:
+    - low
+    - medium
+    - high
+
+application_services:
+  - name: PatientService
+    operations:
+      - register
+      - list
+      - get
+      - deactivate
+      - activate
+  - name: CommandService
+    operations:
+      - create
+      - list
+      - get
+      - calibrate
+      - retire
+  - name: GestureTypeService
+    operations:
+      - list
+      - get
+      - register
+
+feign_clients:
+  - name: AcsClient
+    service: acs-service
+    url_prop: acs.base-url
+  - name: HistAuditClient
+    service: hist-service
+    url_prop: hist.base-url
+
+consumed_events: []
+
+events:
+  published: []
+
+outbound_ports:
+  - TokenValidationPort
+  - AcsIntrospectionPort
+  - HistAuditPort

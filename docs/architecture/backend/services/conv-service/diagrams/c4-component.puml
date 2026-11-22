@@ -1,0 +1,62 @@
+@startuml conv-c4-component
+' C4 Component — CONV (conv-service) — hexagonal (java: api/application/domain/infrastructure)
+title CONV — Components (hexagonal, Java)
+
+skinparam componentStyle rectangle
+
+package "api" {
+  [TreeController]        <<GET /conv/tree>>
+  [AudioController]       <<GET /conv/audio/{id}>>
+  [UsageController]       <<POST /conv/usage-signals>>
+  [PublishController]     <<POST /conv/trees · :retire · DELETE audio>>
+  [ExceptionAdvice]       <<ProblemDetail>>
+}
+
+package "application" {
+  [TreeService]           <<conv.tree.read / publish>>
+  [AudioService]          <<conv.audio.read / delete>>
+  [UsageService]          <<conv.usage.record>>
+  [TreeVersionService]    <<conv.tree-version.retire>>
+  interface "port/in\n(use-case interfaces)" as PIN
+  interface "port/out\n(repository + external ports)" as POUT
+}
+
+package "domain" {
+  [PublishedTree]
+  [TreeVersion]
+  [Category/Phrase]
+  [AudioAsset]
+  [UsageSignal]
+  note bottom : INV-CONV-1..7 (pure POJO; no Spring/JPA)
+}
+
+package "infrastructure" {
+  [PublishedTreeRepositoryAdapter] ..|> POUT
+  [AudioAssetAdapter (blob)]       ..|> POUT
+  [SearchAdapter (pg FTS/trgm)]    ..|> POUT
+  [PatClient (Feign)]              ..|> POUT
+  [HistAuditClient (Feign)]        ..|> POUT
+  [UsageAdapter]                   ..|> POUT
+  [TenantContextFilter / JWKS / CorrelationIdInterceptor]
+}
+
+[TreeController] --> PIN
+[AudioController] --> PIN
+[UsageController] --> PIN
+[PublishController] --> PIN
+PIN -down- [TreeService]
+PIN -down- [AudioService]
+PIN -down- [UsageService]
+PIN -down- [TreeVersionService]
+[TreeService] --> [PublishedTree]
+[TreeService] --> POUT
+[AudioService] --> POUT
+[UsageService] --> POUT
+[TreeVersionService] --> POUT
+
+note right of [PublishController]
+  Inbound port signatures carry NO tenantId (RULE-04);
+  services call TenantContextHolder.require() first.
+  api must not import infrastructure.security.
+end note
+@enduml

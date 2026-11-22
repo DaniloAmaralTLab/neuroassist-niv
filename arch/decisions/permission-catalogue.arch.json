@@ -1,0 +1,152 @@
+{
+  "_schema_version": 1,
+  "version": "1.0.0",
+  "last_changed": "2026-11-19",
+  "convention": {
+    "format": "<module>.<resource>.<action>",
+    "note": "Snake/kebab case, lowercase. Wildcards prohibited in production seeds — individual rows per permission for auditing. Some 4-part codes are intentional (e.g. cad.vendedor.comissao.config) when a resource has natural sub-resources."
+  },
+  "modules": [
+    {
+      "prefix": "gwy",
+      "name": "API Gateway",
+      "description": "Spring Cloud Gateway",
+      "permissions": []
+    },
+    {
+      "prefix": "reg",
+      "name": "Service Registry",
+      "description": "Eureka",
+      "permissions": []
+    },
+    {
+      "prefix": "mig",
+      "name": "Migrations",
+      "description": "Centralized Flyway (all schemas)",
+      "permissions": []
+    },
+    {
+      "prefix": "gest",
+      "name": "Gesture Detection (Edge)",
+      "description": "Webcam capture, facial landmark extraction and multi-class classification of the active command (simple gesture or compound of multiple primitives), executed locally on the patient's device.",
+      "permissions": [
+        "gest.capability.create",
+        "gest.capability.read",
+        "gest.capability.retire",
+        "gest.engine.create",
+        "gest.engine.read",
+        "gest.engine.retire"
+      ]
+    },
+    {
+      "prefix": "evnt",
+      "name": "Events and Alarms",
+      "description": "Generation of the structured event matching the recognized command, orchestration of notification by urgency level (full-screen alarm for emergency; discreet for routine) and routing to the guardian.",
+      "permissions": [
+        "evnt.detection-lapse.confirm",
+        "evnt.detection-lapse.create",
+        "evnt.detection-lapse.read",
+        "evnt.detection-lapse.resolve",
+        "evnt.escalation.read",
+        "evnt.event.confirm",
+        "evnt.event.ingest",
+        "evnt.event.read",
+        "evnt.event.record",
+        "evnt.subscription.create",
+        "evnt.subscription.delete"
+      ]
+    },
+    {
+      "prefix": "pat",
+      "name": "Patients and Command Catalog",
+      "description": "Patient registration and command catalog (gesture -> action, free-form label defined by the family, sensitivity, minimum/maximum gesture time and urgency level), independently calibratable per command.",
+      "permissions": [
+        "pat.command.calibrate",
+        "pat.command.create",
+        "pat.command.read",
+        "pat.command.retire",
+        "pat.gesture-type.create",
+        "pat.gesture-type.read",
+        "pat.patient.activate",
+        "pat.patient.create",
+        "pat.patient.deactivate",
+        "pat.patient.read"
+      ]
+    },
+    {
+      "prefix": "acs",
+      "name": "Caregivers and Access",
+      "description": "Management of caregivers/users, roles and links to patient(s); basis of the multi-tenant model (tenant = family or clinic).",
+      "permissions": [
+        "acs.auth.authenticate",
+        "acs.auth.introspect",
+        "acs.auth.read",
+        "acs.caregiver.create",
+        "acs.caregiver.deactivate",
+        "acs.caregiver.read",
+        "acs.patient-link.link",
+        "acs.patient-link.read",
+        "acs.patient-link.unlink",
+        "acs.patient-session.provision",
+        "acs.patient-session.read",
+        "acs.patient-session.revoke",
+        "acs.tenant.onboard"
+      ]
+    },
+    {
+      "prefix": "hist",
+      "name": "History and Audit Trail",
+      "description": "Immutable record of events, alarms and confirmation/edit actions, with an audit trail.",
+      "permissions": [
+        "hist.audit.read",
+        "hist.audit.record",
+        "hist.erasure.create",
+        "hist.history.read"
+      ]
+    },
+    {
+      "prefix": "dash",
+      "name": "Dashboard and Notifications",
+      "description": "Web dashboard (Angular) for the caregiver to review history, calibrate sensitivity and receive notifications.",
+      "permissions": []
+    },
+    {
+      "prefix": "edge",
+      "name": "Edge Device Integration",
+      "description": "Registration, pairing and heartbeat monitoring of the local (edge) agent that runs gesture detection.",
+      "permissions": [
+        "edge.catalog.read",
+        "edge.device-token.introspect",
+        "edge.device.activate",
+        "edge.device.deactivate",
+        "edge.device.enroll",
+        "edge.device.pair",
+        "edge.device.read",
+        "edge.device.revoke",
+        "edge.device.unpair",
+        "edge.heartbeat.record",
+        "edge.jwks.read"
+      ]
+    },
+    {
+      "prefix": "conv",
+      "name": "Conversation via Speech Tree",
+      "description": "Speech tree navigable by category → phrase, with an input-channel-agnostic design (gesture via GEST or direct touch/mouse). The runtime uses pure retrieval (Elasticsearch/kNN) for assisted semantic search; voice output via pre-synthesized, cached TTS audio (ElevenLabs, the patient's voice); English-only content.",
+      "permissions": [
+        "conv.audio.delete",
+        "conv.audio.read",
+        "conv.tree-version.retire",
+        "conv.tree.publish",
+        "conv.tree.read",
+        "conv.usage.record"
+      ]
+    },
+    {
+      "prefix": "trn",
+      "name": "AI-Assisted Training (Speech Tree Authoring)",
+      "description": "Phase separate from the daily use of CONV: an LLM (Claude/Anthropic) converses with the caregiver and the patient (collaborative flow, dual authorization) to propose new categories/phrases; approved content is indexed in Elasticsearch and has audio synthesized via ElevenLabs. It does not take part in the patient's communication runtime.",
+      "permissions": []
+    }
+  ],
+  "$comment": "Ships ONLY the modules of framework LAYERS, never a client's bounded contexts (D-103 Gap B, D-584). `gro` is here because the growth layer is a framework capability any project can enable (growth.enabled, D-332..D-337) and /gr-architect-admin-module scaffolds against it. A client's own modules go in arch/overrides/permission-catalogue.partial.json via the D-074 deep-merge; see _examples/ for ready-to-copy catalogues (eerripe, candeeiro-so, neuroassist-ai)."
+}

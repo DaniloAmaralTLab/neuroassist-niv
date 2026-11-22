@@ -1,0 +1,23 @@
+{
+  "name": "dash",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/dash/src",
+  "projectType": "library",
+  "tags": ["scope:dash", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/dash/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/dash"],
+      "options": {
+        "jestConfig": "libs/dash/jest.config.ts"
+      }
+    }
+  }
+}

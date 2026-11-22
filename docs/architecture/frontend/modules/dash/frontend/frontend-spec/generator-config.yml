@@ -1,0 +1,115 @@
+# generator-config.yml — DASH (frontend)
+# Input for the Nx module generator consumed by /fe-architect-promote (D-493) and /fe-architect-scaffold.
+# Emitted by /fe-architect-specs neuroassist-niv DASH.
+# Sources: frontend/01-06 + adr/ADR-005 (composition host + fail-safe overview), BE adr/ADR-001 (no backend)
+#          + adr/ADR-002 (fail-safe overview), frontend-spec/SPEC-01..08, contracts/backend-api-cross-link.md.
+# DASH is prototype-to-production (D-493): screens/home -> libs/dash/feature-overview, re-wired from the four
+# prototype facades to the composed modules' public index.ts seams. DASH has NO backend and NO dash.* authority.
+
+module: dash
+issue_prefix: NEUR                               # project issuePrefix (project-context.json)
+npm_scope: "@neuroassist"
+shell_route: /home                               # the default post-login dashboard destination (SPEC-01 §1)
+app: neuroassist-niv-web                          # shell app that lazy-loads @neuroassist/dash as the home branch
+entry_lib: frontend/libs/dash                     # importPath @neuroassist/dash — bare name, house convention (shared ADR-006)
+state_management: signals                         # no NgRx; signal/computed + .asReadonly(); aggregator of read-only windows, never a store
+module_type: composition-host                     # ADR-005: composes HIST/EVNT/EDGE/PAT public APIs; owns no data
+
+# ── Features (frontend/libs/dash/feature-*) ────────────────────────────────────
+features:
+  - name: overview
+    routes: [/home]
+    components: [OverviewPageComponent, OverviewHeadlineComponent, KpiRowComponent, DetectionLapseNoticeComponent, SuggestionCardComponent, CatalogSummaryComponent]
+
+# ── Data access — DASH owns NO HTTP at MVP (BE ADR-001) ─────────────────────────
+# No libs/dash/api/*, no HttpClient, no /dash base_path. DASH reads ONLY the composed modules' public seams.
+data_access: []                                   # composition-only; a DASH_OVERVIEW_PORT is added ONLY if a dash-service is confirmed (ADR-001 revisit, flag dash.bff.enabled)
+adapter_default: none                             # no DASH adapter while dash.bff.enabled = off (carry-forward scaffold:mock-adapter-default applies only if a port is later added)
+
+# ── Composition — the modules DASH hosts (read via index.ts only) ───────────────
+composition:
+  - module: hist
+    import: "@neuroassist/hist"
+    consumes: [HistShellIntegrationService, HistoryWidgetComponent, HistoryFacade]
+    authority: hist.history.read                  # day-KPI row + recent-events preview
+  - module: evnt
+    import: "@neuroassist/evnt"
+    consumes: [AlarmFacade, RoutineNoticeListComponent, RoutineNoticeIndicatorComponent]
+    authority: evnt.event.read                    # alarm/monitoring status + routine notices
+  - module: evnt
+    import: "@neuroassist/evnt"
+    consumes: [LapseAlertFacade]                  # planned by FE-EVNT-027..030 (SAFETY-GEST-1) — see INT-DASH-1
+    authority: evnt.detection-lapse.read          # open detection-lapse notice (EVNT api-contract: GET /evnt/patients/{patientId}/detection-lapses)
+  - module: edge
+    import: "@neuroassist/edge"
+    consumes: [DeviceFacade, EdgeDeviceCardComponent, DeviceStatusBadgeComponent]
+    authority: edge.device.read                   # device-health panel
+  - module: pat
+    import: "@neuroassist/pat"
+    consumes: [PatientFacade, CommandFacade]
+    authority: pat.command.read                   # command-catalog summary (patient identity = shell context, INV-6)
+
+# ── INT items — exports to ADD to the owning libs (never call their HTTP from DASH; SPEC-04 §4) ─────
+integration_requests:
+  - id: INT-DASH-1
+    owner_module: evnt
+    add_export: "LapseAlertFacade open-lapse signal (Signal<DetectionLapseVM[]>) — ALREADY PLANNED by FE-EVNT-027/028 (SAFETY-GEST-1); EDGE detection fields by FE-EDGE-028/029"
+    reason: "EVNT index.ts exports no OPEN detection-lapse read; needed for the 'online but not detecting' notice (SPEC-04 §4, SPEC-07 §2). Authority evnt.detection-lapse.read (EVNT BE). Depends on FE-EVNT-028 + FE-EDGE-028/029 — consume those, do not add a parallel export."
+    blocking: false                               # stopgap: derive a DEGRADED (never all_clear) headline from an open HIST DetectionLapseStarted entry until the export lands
+  - id: INT-DASH-2
+    owner_module: hist
+    add_export: "PeriodSummaryVM.loadedAt (or summaryLoadedAt signal)"
+    reason: "Optional: lets DASH read an upstream read-time instead of tracking histReadAt locally (SPEC-03 §3)."
+    blocking: false
+
+# ── Access (frontend/libs/dash/access) ─────────────────────────────────────────
+guards:
+  - authGuard                                     # /home; session-absent redirects to the ACS login flow
+  - dashGuard                                     # /home; AccessDecisionService-backed (authenticated caregiver + linked patient); evaluates NO dash.* key (SPEC-01 §4). Never a hardcoded true (guard:stub-permissive)
+
+# ── Module contract (dash.contract.ts) — union of composed BE authorities, NO dash.* (D-639) ──────
+module_contract:
+  key: dash
+  label: Home
+  icon: dashboard
+  section: care
+  order: 0                                        # the first, default destination after sign-in
+  permissions:                                    # copied verbatim from the owning modules; reads are .read, never .view
+    - hist.history.read                           # day KPIs + recent-events preview (HIST)
+    - evnt.event.read                             # alarm/monitoring + routine notices (EVNT)
+    - evnt.detection-lapse.read                   # open detection-lapse notice (EVNT, SAFETY-GEST-1)
+    - edge.device.read                            # device-health panel (EDGE)
+    - pat.command.read                            # command-catalog summary (PAT)
+  # NO dash.* authority exists — DASH has no backend (BE ADR-001). pat.patient identity = shell/ACS context (INV-6), not a DASH key.
+  feature_flags:
+    dash.suggestion.enabled: on                   # inline advisory card (deterministic heuristic over HIST entries) — off hides the card (INV-5)
+    dash.bff.enabled: off                         # OFF until a dash-service is confirmed by BE (ADR-001); while off DASH binds no data port
+
+# ── Cross-module writes — DASH binds ZERO writes (INV-2, ADR-005) ──────────────
+delegations: []                                   # the only caregiver write reachable (confirm/feedback) is EVNT's own path; DASH never binds it
+
+# ── Shell surfaces (SPEC-06) ───────────────────────────────────────────────────
+shell_surfaces:
+  - HomeDestination                               # /home default landing menu entry (section 'care', order 0)
+  - EntryPromotion                                # entry screen promoted as a SHELL route (ACS login CTA) by the promote phase — NOT a DASH route (SPEC-01 §5, owner = SHELL)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ───────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/access-decision"
+  - "@neuroassist/shared/error-model"
+  - "@neuroassist/shared/observability"
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-feedback"             # degraded/error caregiver messaging
+  - "@neuroassist/shared/ui-tokens"               # oklch design tokens; dark default; amber for the detection-lapse notice (never --color-alarm)
+
+extra_dependencies: []                            # DASH pulls no new dependency; no NgRx, no HttpClient, no poll loop of its own
+
+# ── Backend cross-link — DASH has no backend; this points at the no-backend decision ────────────
+backend_contract: ../../../../../backend/services/dash-service/adr/ADR-001-dash-has-no-backend-service.md
+
+# ── E2E ────────────────────────────────────────────────────────────────────────
+e2e:
+  project: dash-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/dash/frontend/e2e/

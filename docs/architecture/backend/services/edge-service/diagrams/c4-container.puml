@@ -1,0 +1,35 @@
+@startuml edge-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Container.puml
+title EDGE — Container (edge-service, NeuroAssist NIV)
+
+System_Ext(gwy, "GWY", "API Gateway")
+System_Ext(station, "Edge station", "Browser agent (ADR-014)")
+
+System_Boundary(edge, "EDGE") {
+  Container(svc, "edge-service", "Java 21 / Spring Boot", "Device lifecycle, device-token issuer+JWKS, heartbeat watchdog + detection-lapse sweep (@Scheduled), catalog cache-and-serve")
+  ContainerDb(db, "PostgreSQL", "global + t_<tenantId>", "device_pairing_code (global); edge_device (+ detection_state), edge_credential_revocation, cached_catalog, edge_detection_lapse (per-tenant)")
+}
+
+System_Ext(reg, "REG (Eureka)", "Service discovery")
+System_Ext(acs, "ACS", "JWKS / introspect / service-client token")
+System_Ext(pat, "PAT", "Catalog pull (service-client, ETag/304)")
+System_Ext(hist, "HIST", "Audit")
+System_Ext(evnt, "EVNT", "Detection-lapse raise/resolve (service-client, G6 — endpoint EVNT-owned)")
+
+Rel(gwy, svc, "Routes /edge/**", "HTTPS")
+Rel(station, svc, "pair / heartbeat (+detectionState) / catalog", "HTTPS")
+Rel(svc, db, "Spring Data JPA (schema-per-tenant)", "JDBC")
+Rel(svc, reg, "register + discover", "HTTP")
+Rel(svc, acs, "JWKS + introspect + client-credentials", "sync REST")
+Rel(svc, pat, "GET /pat/patients/{id}/commands (If-None-Match)", "sync REST")
+Rel(svc, hist, "POST /audit", "sync REST")
+Rel(svc, evnt, "Raise/resolve detection lapse (service-client, idempotent)", "sync REST — G6")
+
+note right of svc
+  No broker (messaging disabled). The heartbeat watchdog
+  and the detection-lapse sweep (ADR-005) are in-process
+  @Scheduled jobs, not consumers. A lapse escalates to EVNT
+  over sync REST (retried-not-dropped). Catalog refresh is
+  cache-first; a PAT outage degrades to the cache (INV-EDGE-5).
+end note
+@enduml

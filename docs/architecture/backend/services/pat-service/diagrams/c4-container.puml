@@ -1,0 +1,25 @@
+@startuml pat-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Container.puml
+title PAT — Container (NeuroAssist NIV)
+
+Person(caregiver, "Caregiver / Clinic Coordinator", "caregiver JWT")
+System_Ext(gwy, "GWY — api-gateway", "Spring Cloud Gateway")
+System_Ext(reg, "REG — Eureka", "Service discovery")
+
+System_Boundary(pat, "PAT — pat-service") {
+  Container(api, "pat-service", "Java 21 / Spring Boot", "Resource server; REST /pat; @PreAuthorize == RoleAuthorityPolicy constants")
+  ContainerDb(db, "PostgreSQL", "neuroassist_global + t_<tenantId>", "gesture_type (global); patient, command (per-tenant)")
+}
+
+System_Ext(acs, "ACS — acs-service", "JWKS + introspect")
+System_Ext(hist, "HIST — hist-service", "Audit sink")
+System_Ext(detect, "GEST / EDGE / EVNT / DASH / CONV", "Catalog & patient consumers")
+
+Rel(caregiver, gwy, "HTTPS + JWT")
+Rel(gwy, api, "Routes /pat", "HTTP")
+Rel(api, reg, "Registers / discovers", "Eureka")
+Rel(api, db, "JPA (schema-per-tenant routing by JWT tenantId)", "JDBC")
+Rel(api, acs, "Verify JWT via JWKS; introspect on sensitive ops", "sync REST")
+Rel(api, hist, "POST /audit (domain actions)", "sync REST")
+Rel(detect, api, "Pull catalog / read patient (service client or caregiver token)", "sync REST + ETag")
+@enduml

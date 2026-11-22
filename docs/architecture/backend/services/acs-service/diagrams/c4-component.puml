@@ -1,0 +1,78 @@
+@startuml acs-c4-component
+' C4 Component — ACS internal hexagonal packages (Java)
+' Ref: ADR-001-hexagonal-architecture.md (key hexagonal_java)
+title ACS — Components (hexagonal, com.neuroassist.acs)
+
+package "api" #E8F0FE {
+  [AuthController] as authc
+  [CaregiverController] as caregiverc
+  [LinkController] as linkc
+  [PatientSessionController] as sessionc
+  [TenantOpsController] as opsc
+  note bottom of opsc : @PreAuthorize == RoleAuthorityPolicy constants (INV-7)
+}
+
+package "application" #FEF7E0 {
+  [Authenticate] as uc1
+  [RegisterCaregiver] as uc2
+  [DeactivateCaregiver] as uc3
+  [LinkPatient / UnlinkPatient] as uc4
+  [ProvisionSession] as uc5
+  [RevokeSession] as uc6
+  [OnboardTenant] as uc7
+}
+
+package "domain" #E6F4EA {
+  [Tenant] as d1
+  [Caregiver] as d2
+  [PatientSession] as d3
+  [RoleAuthorityPolicy] as d4
+  [Authority / TenantId (VO)] as d5
+  interface "CaregiverRepository" as pR1
+  interface "PatientSessionRepository" as pR2
+  interface "TenantRepository" as pR3
+  interface "TokenIssuer" as pR4
+  interface "TokenBlacklist" as pR5
+  interface "AuditPort" as pR6
+}
+
+package "infrastructure" #FCE8E6 {
+  [JpaCaregiverAdapter] as a1
+  [JpaPatientSessionAdapter] as a2
+  [JpaTenantAdapter] as a3
+  [JwtTokenIssuer (Spring Security)] as a4
+  [JpaBlacklistAdapter] as a5
+  [HistAuditClient (Feign)] as a6
+}
+
+authc --> uc1
+caregiverc --> uc2
+caregiverc --> uc3
+linkc --> uc4
+sessionc --> uc5
+sessionc --> uc6
+opsc --> uc7
+
+uc1 --> d2
+uc1 --> pR4
+uc5 --> d3
+uc5 --> pR4
+uc6 --> pR5
+uc2 --> d4
+uc7 --> d1
+
+uc1 ..> pR1
+uc5 ..> pR2
+uc7 ..> pR3
+uc1 ..> pR6
+
+pR1 <|.. a1
+pR2 <|.. a2
+pR3 <|.. a3
+pR4 <|.. a4
+pR5 <|.. a5
+pR6 <|.. a6
+
+note right of domain : domain imports nothing outward;\napplication depends on domain;\napi + infrastructure depend inward.
+
+@enduml

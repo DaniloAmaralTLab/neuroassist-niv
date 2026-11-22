@@ -1,0 +1,123 @@
+# generator-config.yml — GEST (frontend)
+# Input for the Nx module generator consumed by /fe-architect-scaffold (and /fe-architect-promote).
+# Emitted by /fe-architect-specs neuroassist-niv GEST.
+# Sources: frontend/01-06 + adr/ADR-005 (local, on-device runtime) + shared ADR-006,
+#          frontend-spec/SPEC-01..09, contracts/backend-api-cross-link.md.
+# NOTE: GEST is the on-device STATION RUNTIME, not a caregiver dashboard. It is net-new (not a
+#       prototype-promoted screen — ADR-005: the BA prototype's only webcam screen is PAT's tactile
+#       live-test with NO recognition). Its egress is three DEVICE-TOKEN calls; it is gated by the
+#       station identity (edge.device), not a caregiver JWT.
+
+module: gest
+issue_prefix: GEST
+npm_scope: "@neuroassist"
+shell_route: /station                           # Patient-Mode station context (NOT the caregiver sidebar)
+app: gest                                       # apps/gest thin host (type:app, scope:gest); the Patient-Mode
+                                                #   host shell that mounts it + co-mounts CONV is UNDECIDED (gap G1)
+entry_lib: libs/gest                            # importPath @neuroassist/gest (shared ADR-006)
+state_management: signals                       # no NgRx; signal/computed + .asReadonly(); rAF loop, not setInterval
+net_new: true                                   # NOT prototype-promoted (ADR-005) — scaffold, don't promote
+identity: edge.device                           # the module is gated by the station identity, not a caregiver JWT
+
+# ── Features (libs/gest/feature-*) ─────────────────────────────────────────────
+features:
+  - name: station-runtime
+    routes: [/station/runtime]
+    components: [StationRuntimePageComponent, OperatorPreviewComponent, DetectionPausedOverlayComponent]
+    guard: stationIdentityGuard                 # edge.device identity (NOT a caregiver authority)
+    breadcrumb: false                            # near-headless; the patient never navigates
+  - name: station-status
+    routes: [/station/status]
+    components: [StationStatusPageComponent, DetectionStatusPanelComponent, ActiveCommandListComponent, ReportQueuePanelComponent]
+    guard: stationIdentityGuard
+
+# ── Domain (libs/gest/detection — type:domain, on-device hot path, NO HttpClient) ──
+detection:
+  worker: LandmarkWorker                        # Web Worker: frame → landmarks → classification (ADR-005 local)
+  components: [CameraService, ClassifierService, CompoundGestureStateMachine, sensitivityThreshold, reportIdMinter]
+  loop: requestAnimationFrame                   # NOT setInterval; off the main thread
+  privacy: on-device-only                       # frames + landmarks discarded per tick; never persisted/logged/sent (INV-GEST-4)
+
+# ── Data access (libs/gest/data-access) — THREE device-token calls ─────────────
+# adapter default = http (evnt-service + gest-service exist). ALL calls carry the edge.device token
+# via the device-token interceptor variant of access-http-base (NOT the caregiver bearer).
+data_access:
+  - resource: GestureReport                     # the ONE write
+    base_path: /evnt/gesture-reports            # ${ACCESS_HTTP_BASE}/evnt (EVNT api-contract §2.1)
+    operations: [report]
+    identity: edge.device
+    authority: evnt.event.ingest                # carried by the edge.device token (EDGE G5)
+    exactly_once: true                          # (deviceId, reportId); reportId reused across retries (INV-GEST-1)
+    delivery: pessimistic                       # held 'sending' until 201/200; no optimistic sent (doc 05 §4)
+    offline_queue: durable                      # survives network gap + reload; >24h → expired (INV-GEST-5)
+  - resource: CapabilitySupport                 # the detectable gate (INV-GEST-7)
+    base_path: /gest/capabilities               # ${ACCESS_HTTP_BASE}/gest (GEST api-contract §3.3)
+    operations: [checkSupport, listEngines]     # POST /gest/capabilities/support-check ; GET /gest/engines
+    identity: edge.device
+    authority: [gest.capability.read, gest.engine.read]   # INT-GEST-ACS-1 (token must carry these — OPEN)
+    cache: etag-by-engineVersion
+  - resource: Catalog                           # the active command set (read-model of EDGE's offline cache)
+    base_path: /edge/catalog                    # ${ACCESS_HTTP_BASE}/edge (EDGE api-contract §4.1)
+    operations: [read]
+    identity: edge.device
+    authority: edge.catalog.read
+    cache: edge-etag                            # If-None-Match / 304
+
+adapter_default: http                            # carry-forward: providers spec MUST prove http, not mock
+
+# ── Access (libs/gest/access) — station identity, NOT caregiver authority ───────
+guards:
+  - stationIdentityGuard                        # requires a valid, unrevoked edge.device token; never hardcoded true
+# RECONCILIATION (mandatory): the vision's canReadRuntimeGuard/canControlRuntimeGuard and the
+# authorities gest.runtime.read / gest.runtime.control / gest.diagnostics.read are DROPPED — no such
+# backend authority exists; the station runtime is FE-local, gated by the station identity (SPEC-01 §2).
+
+# ── Module contract (gest.contract.ts) — NO caregiver gest.* authority in v1 ────
+module_contract:
+  key: gest
+  label: Station Detection
+  icon: sensors
+  section: station                              # Patient-Mode context, not the caregiver 'care' sidebar
+  permissions: []                               # GEST contributes no caregiver authority-gated affordance (SPEC-05 §2)
+  station_token_authorities:                    # what the edge.device token MUST carry (INT-GEST-ACS-1, EDGE G5)
+    - evnt.event.ingest
+    - gest.capability.read
+    - gest.engine.read
+    - edge.catalog.read
+    - edge.heartbeat.record
+  feature_flags:
+    gest.compound-gestures: on                  # primary+secondary primitive window (INV-GEST-2)
+    gest.operator-preview: on                   # optional live camera preview (same stream the worker reads)
+    gest.offline-queue: on                      # durable queue + retry (INV-GEST-1/5)
+    gest.wake-lock: on                          # Screen Wake Lock acquire/re-acquire (SPEC-09 SAFETY)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ───────────────────────────────
+# NOTE: GEST uses the DEVICE-TOKEN interceptor variant of access-http-base, NOT shared/auth-session
+# (the station runtime holds no caregiver session). access-decision is NOT consumed in v1 (no caregiver
+# authority-gated surface).
+shared_libs_used:
+  - "@neuroassist/shared/access-http-base"      # device-token interceptor variant
+  - "@neuroassist/shared/contracts"
+  - "@neuroassist/shared/error-model"
+  - "@neuroassist/shared/observability"         # schema-whitelisted; never frames/landmarks
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-components"
+  - "@neuroassist/shared/ui-feedback"
+  - "@neuroassist/shared/ui-tokens"
+
+extra_dependencies:                              # on-device landmark engine (local WASM + model asset, ADR-005)
+  - "@mediapipe/tasks-vision"                    # FaceLandmarker (or TF.js equivalent) — loaded locally, NOT a port
+
+# ── Backend cross-link (GEST owns support-check; reports to EVNT; reads EDGE catalog) ──
+backend_contract: ../../../../../backend/services/gest-service/contracts/api-contract.md
+upstream_contracts:
+  - ../../../../../backend/services/evnt-service/contracts/api-contract.md   # POST /evnt/gesture-reports (the write)
+  - ../../../../../backend/services/edge-service/contracts/api-contract.md   # GET /edge/catalog + edge.device identity
+
+# ── E2E ──────────────────────────────────────────────────────────────────────
+e2e:
+  project: gest-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/gest/frontend/e2e/
+  harness: [fake-getUserMedia, stub-classifier]  # deterministic recognition; no real model in CI (doc 04 §1)

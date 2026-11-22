@@ -1,0 +1,114 @@
+package com.neuroassist.gest.architecture;
+
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.Yaml;
+
+class PropertyValidationTest {
+
+    /**
+     * RULE-08 (CLAUDE.md): spring.jpa.open-in-view=false is mandatory in every service that uses
+     * JPA. This test reads application*.yml from disk (no Spring context needed) and asserts the
+     * property is explicitly set to false.
+     *
+     * <p>Services without JPA (candeeiro-so-api-gateway, candeeiro-so-service-registry,
+     * candeeiro-so-migrations) are detected via Class.forName and the test is skipped.
+     *
+     * <p>Absence of the property is treated as a violation, because Spring's default is true.
+     * Multi-document YAML files (with --- separators) are handled via loadAll().
+     */
+    @Test
+    void rule08_openInViewMustBeFalse() throws Exception {
+        boolean hasJpa;
+        try {
+            Class.forName("org.hibernate.SessionFactory");
+            hasJpa = true;
+        } catch (ClassNotFoundException e) {
+            hasJpa = false;
+        }
+        Assumptions.assumeTrue(
+                hasJpa,
+                "Skipping RULE-08: org.hibernate.SessionFactory not on classpath"
+                        + " \u2014 this service has no JPA dependency.");
+
+        Path resourcesDir = Path.of(System.getProperty("user.dir"), "src", "main", "resources");
+        List<Path> ymlFiles = new ArrayList<>();
+        try (Stream<Path> stream =
+                Files.find(
+                        resourcesDir,
+                        1,
+                        (p, attr) ->
+                                p.getFileName().toString().startsWith("application")
+                                        && p.getFileName().toString().endsWith(".yml"))) {
+            stream.forEach(ymlFiles::add);
+        }
+
+        if (ymlFiles.isEmpty()) {
+            fail(
+                    "RULE-08 (CLAUDE.md): No application*.yml found in "
+                            + resourcesDir
+                            + ". Cannot verify spring.jpa.open-in-view.");
+        }
+
+        Yaml yaml = new Yaml();
+        List<String> violations = new ArrayList<>();
+        boolean mainFileDeclaresFalse = false;
+
+        for (Path ymlFile : ymlFiles) {
+            try (InputStream is = Files.newInputStream(ymlFile)) {
+                // loadAll handles multi-document YAML files (--- separated, e.g. Spring profiles)
+                for (Object document : yaml.loadAll(is)) {
+                    if (!(document instanceof Map)) continue;
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> props = (Map<String, Object>) document;
+                    Object openInView = getNestedValue(props, "spring", "jpa", "open-in-view");
+                    if (openInView != null) {
+                        boolean isFalse =
+                                Boolean.FALSE.equals(openInView)
+                                        || "false".equalsIgnoreCase(String.valueOf(openInView));
+                        if (!isFalse) {
+                            violations.add(
+                                    String.format(
+                                            "RULE-08 violation in [%s]: spring.jpa.open-in-view = %s"
+                                                    + " (must be false \u2014 CLAUDE.md)",
+                                            ymlFile.getFileName(), openInView));
+                        }
+                        if (ymlFile.getFileName().toString().equals("application.yml") && isFalse) {
+                            mainFileDeclaresFalse = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!mainFileDeclaresFalse) {
+            violations.add(
+                    "RULE-08 violation: application.yml does not declare"
+                            + " spring.jpa.open-in-view=false."
+                            + " Absence means Spring defaults to open-in-view=true (CLAUDE.md).");
+        }
+
+        if (!violations.isEmpty()) {
+            fail("RULE-08 (CLAUDE.md) violation(s) detected:\n" + String.join("\n", violations));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object getNestedValue(Map<String, Object> map, String... keys) {
+        Object current = map;
+        for (String key : keys) {
+            if (!(current instanceof Map)) return null;
+            current = ((Map<String, Object>) current).get(key);
+        }
+        return current;
+    }
+}

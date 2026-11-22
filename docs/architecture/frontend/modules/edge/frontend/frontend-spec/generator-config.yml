@@ -1,0 +1,88 @@
+# generator-config.yml — EDGE (frontend)
+# Input for the Nx module generator consumed by /fe-architect-scaffold (and /fe-architect-promote).
+# Emitted by /fe-architect-specs neuroassist-niv EDGE.
+# Sources: frontend/01-06 + adr/ADR-005 (local) + shared ADR-006, frontend-spec/SPEC-01..08,
+#          contracts/backend-api-cross-link.md. Authorities are BE-canonical (INV-EDGE-7, D-639).
+
+module: edge
+issue_prefix: EDGE
+npm_scope: "@neuroassist"
+shell_route: /patients/:patientId/device      # patient-scoped; EDGE has no top-level sidebar destination
+app: neuroassist-niv-web                       # shell app that lazy-loads @neuroassist/edge
+entry_lib: libs/edge                           # importPath @neuroassist/edge (shared ADR-006)
+state_management: signals                       # no NgRx; signal/computed + .asReadonly()
+
+# ── Features (libs/edge/feature-*) ─────────────────────────────────────────────
+features:
+  - name: device-pairing
+    routes: [/patients/:patientId/device/pair]
+    components: [DevicePairingPageComponent, DevicePairingPanelComponent]
+  - name: device-status
+    routes: [/patients/:patientId/device]
+    components: [EdgeDeviceStatusPageComponent, EdgeDeviceCardComponent]
+
+# ── Data access (libs/edge/data-access) ────────────────────────────────────────
+# base_path is the gateway prefix /edge (NOT /api/v1). Adapter default = http (edge-service exists).
+# FE consumes ONLY the human device-management endpoints (api-contract §2); the device-token endpoints
+# /edge/heartbeat, /edge/catalog, /edge/.well-known/jwks.json, /edge/device-tokens/introspect are out
+# of FE scope (exercised by the edge agent / resource servers).
+data_access:
+  - resource: EdgeDevice
+    base_path: /edge/devices
+    operations: [enroll, list, get, reactivate, deactivate, unpair, revoke]
+    idempotent_ops: [reactivate, deactivate, unpair, revoke]
+
+adapter_default: http                            # carry-forward: providers spec must prove http, not mock
+
+# ── Access (libs/edge/access) ──────────────────────────────────────────────────
+guards:
+  - authGuard                      # all EDGE routes; session-absent redirects to login
+  - canReadDeviceGuard             # device-status surfaces — AccessDecisionService.can('edge.device.read')
+  - canPairDeviceGuard             # pairing surfaces — AccessDecisionService.can('edge.device.pair')
+
+# ── Module contract (edge.contract.ts) — BE authorities (INV-EDGE-7, D-639) ─────
+module_contract:
+  key: edge
+  label: Edge Device
+  icon: router
+  section: care
+  permissions:
+    - edge.device.enroll
+    - edge.device.pair
+    - edge.device.read
+    - edge.device.activate
+    - edge.device.deactivate
+    - edge.device.unpair
+    - edge.device.revoke
+  feature_flags:
+    edge.patient-phone-pairing: on   # Screen 07 device portion (Android/Chromium, ADR-014/PLAT-001)
+    edge.device-lifecycle: on        # re-pair / unpair / deactivate / revoke
+
+# ── Shared libs consumed (@neuroassist/shared/*) ───────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/auth-session"
+  - "@neuroassist/shared/tenant-context"
+  - "@neuroassist/shared/access-decision"
+  - "@neuroassist/shared/access-http-base"
+  - "@neuroassist/shared/contracts"
+  - "@neuroassist/shared/error-model"
+  - "@neuroassist/shared/observability"
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-components"
+  - "@neuroassist/shared/ui-feedback"
+  - "@neuroassist/shared/ui-tokens"
+
+extra_dependencies: []
+
+# ── Topbar contribution (always-visible connectivity, doc 02 §3.2.B) ────────────
+topbar_contribution: DeviceStatusBadge           # eager presentational from libs/edge/ui
+
+# ── Backend cross-link ─────────────────────────────────────────────────────────
+backend_contract: ../../../../../backend/services/edge-service/contracts/api-contract.md
+
+# ── E2E ──────────────────────────────────────────────────────────────────────
+e2e:
+  project: edge-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/edge/frontend/e2e/

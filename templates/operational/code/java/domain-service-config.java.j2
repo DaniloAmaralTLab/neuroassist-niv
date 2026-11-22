@@ -1,0 +1,22 @@
+{#-
+  domain-service-config.java.j2 — extracted from gen_domain_service_config() in be-module-generator.py.
+  Variables: pkg_full
+-#}
+package {{ pkg_full }}.infrastructure.config;
+
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Registers domain services as @Bean.
+ * Domain services are plain POJOs (no @Service) and must be declared here.
+ * Add one @Bean per domain service when implementing the domain.
+ */
+@Configuration
+public class DomainServiceConfig {
+    // TODO[SCAFFOLD]: register domain services as they are implemented.
+    // Example:
+    //   @Bean
+    //   public AssessmentDomainService assessmentDomainService() {
+    //       return new AssessmentDomainService();
+    //   }
+}

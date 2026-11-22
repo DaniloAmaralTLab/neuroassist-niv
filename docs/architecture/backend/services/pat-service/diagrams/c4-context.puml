@@ -1,0 +1,33 @@
+@startuml pat-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Context.puml
+title PAT — System Context (NeuroAssist NIV)
+
+Person(caregiver, "Family Caregiver / Clinic Coordinator", "Authors patients and commands; bearer caregiver JWT (via DASH -> GWY)")
+
+System_Boundary(pat, "PAT — pat-service") {
+  System(patsvc, "pat-service", "Owns Patient, Command and the global GestureType catalog; ACS resource server; base path /pat")
+}
+
+System_Ext(acs, "ACS — acs-service", "JWT issuer + JWKS; revocation-aware introspection")
+System_Ext(hist, "HIST — hist-service", "Audit sink (sync REST)")
+System_Ext(mig, "MIG — migrations", "Applies PAT-authored Flyway centrally")
+System_Ext(gwy, "GWY — api-gateway", "Fronts /pat; generates X-Correlation-Id")
+
+System_Ext(gest, "GEST — detection", "Pulls active command catalog (service client)")
+System_Ext(edge, "EDGE — device agent", "Pulls catalog bound to a device's patient")
+System_Ext(evnt, "EVNT — events/alarms", "Reads command by id: urgency + label")
+System_Ext(dash, "DASH — dashboard", "Reads patients + commands (caregiver token)")
+System_Ext(conv, "CONV — speech tree", "Reads patient by id")
+
+Rel(caregiver, gwy, "HTTPS + caregiver JWT")
+Rel(gwy, patsvc, "Routes /pat")
+Rel(patsvc, acs, "Validate JWT (JWKS), introspect", "sync REST")
+Rel(patsvc, hist, "Audit domain actions", "sync REST")
+Rel(mig, patsvc, "Applies Flyway V0020+ (authored by PAT)")
+
+Rel(gest, patsvc, "GET active catalog", "pat.command.read (service client)")
+Rel(edge, patsvc, "GET catalog + gesture-types (ETag)", "pat.command.read (service client)")
+Rel(evnt, patsvc, "GET command by id", "pat.command.read")
+Rel(dash, patsvc, "GET patients + commands", "caregiver token")
+Rel(conv, patsvc, "GET patient by id", "pat.patient.read")
+@enduml

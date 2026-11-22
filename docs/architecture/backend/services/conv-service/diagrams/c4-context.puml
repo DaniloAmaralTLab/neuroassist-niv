@@ -1,0 +1,34 @@
+@startuml conv-c4-context
+' C4 Context — CONV (conv-service)
+title CONV — System Context
+
+skinparam componentStyle rectangle
+left to right direction
+
+actor "Patient-with-session\n(station, patient-session token)" as Patient
+actor "Caregiver / Clinic Coordinator\n(via DASH)" as Caregiver
+
+rectangle "conv-service\n(CONV — speech-tree runtime)" as CONV
+
+rectangle "TRN\n(authoring: LLM + TTS/ElevenLabs,\ndual authorization)" as TRN
+rectangle "ACS\n(identity, patient-session token, JWKS)" as ACS
+rectangle "PAT\n(patient reference)" as PAT
+rectangle "HIST\n(append-only audit)" as HIST
+rectangle "MIG\n(centralized Flyway)" as MIG
+database "Blob storage\n(pre-synthesized audio bytes)" as BLOB
+
+Patient --> CONV : GET /conv/tree (ETag/304),\nGET /conv/audio/{id},\nPOST /conv/usage-signals\n(all patient-session)
+TRN --> CONV : POST /conv/trees (publish),\n:retire, DELETE .../audio\n(TRN service-client)
+CONV --> ACS : validate token via JWKS
+CONV --> PAT : GET /pat/patients/{id}\n(pat.patient.read)
+CONV --> HIST : POST /hist/audit\n(hist.audit.record)
+CONV --> BLOB : read cached audio (AudioAssetPort)
+MIG --> CONV : applies conv schema migrations
+Caregiver ..> CONV : (opt-in usage reviewed in DASH; no tree access)
+
+note bottom of CONV
+  Live speaking path is client-side over the station cache:
+  no CONV round-trip per phrase (ADR-003/004, INV-CONV-5).
+  CONV never synthesizes audio (ADR-005).
+end note
+@enduml

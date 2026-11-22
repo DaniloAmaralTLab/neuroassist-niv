@@ -1,0 +1,19 @@
+@startuml hist-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title HIST — Components (hexagonal, com.neuroassist.hist)
+
+Container_Boundary(hist, "hist-service") {
+  Component(api, "api", "controllers + DTOs", "AuditController (/hist/audit), HistoryController (/hist/patients/{id}/history, /hist/audit GET), ErasureController; EnvelopeReconciliationAdapter (producer shapes -> canonical); no infrastructure import")
+  Component(app, "application", "use cases", "AppendAuditRecord, QueryPatientHistory, QueryAuditTrail, RequestSubjectErasure; idempotency orchestration; TenantContextHolder.require() for tenant-scoped ops")
+  Component(domain, "domain", "model + ports", "AuditRecord (immutable aggregate), VOs (AuditAction, ActorRef, SubjectRef, CorrelationId, IdempotencyKey); ports AuditTrailPort, HistoryReadPort, SubjectKeyPort; INV-HIST-*")
+  Component(infra, "infrastructure", "adapters", "JPA append-only persistence + idempotent upsert; global-vs-tenant routing; crypto-shred key store; Spring Security + TenantContextFilter (@Order(LOWEST_PRECEDENCE-10))")
+}
+
+ContainerDb(pg, "PostgreSQL", "schema-per-tenant", "")
+
+Rel(api, app, "invokes")
+Rel(app, domain, "depends on")
+Rel(infra, domain, "implements ports")
+Rel(api, infra, "security filter chain")
+Rel(infra, pg, "JDBC")
+@enduml

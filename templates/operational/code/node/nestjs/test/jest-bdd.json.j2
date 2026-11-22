@@ -1,0 +1,26 @@
+{#-
+  jest-bdd.json.j2 — jest config for the jest-cucumber suite (D-606).
+
+  Separate from jest-e2e.json for the same reason that one exists apart from the
+  unit config: the BDD suite binds .feature contracts and is expected to report
+  SKIPPED until each scenario is implemented, so mixing it into the unit run
+  would make `pnpm test` look half-pending forever.
+
+  `rootDir` is `test/bdd` because jest-cucumber's `loadFeature` resolves the
+  feature path relative to the file that calls it, and the suites live there.
+-#}
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "bdd",
+  "testEnvironment": "node",
+  "testRegex": "\\.steps\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^src/(.*)$": "<rootDir>/../../src/$1"
+  },
+  "setupFilesAfterEnv": [],
+  "testTimeout": 30000,
+  "maxWorkers": 1
+}

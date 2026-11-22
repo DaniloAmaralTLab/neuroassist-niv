@@ -1,0 +1,32 @@
+@startuml gest-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title GEST — Containers (gest-service)
+
+System_Boundary(gest, "gest-service (GEST)") {
+  Container(api, "REST API", "Spring Web", "EngineController, CapabilityController under /gest")
+  Container(app, "Application services", "Spring @Transactional", "EngineVersionService, CapabilityService")
+  Container(domain, "Domain", "Java", "EngineVersion, EngineCapability, SupportStatus, ports")
+  Container(infra, "Infrastructure", "Spring Data JPA / Feign / Security", "JPA adapters (global schema), ACS JWKS, PatGestureTypeClient, HIST audit")
+  ContainerDb(db, "PostgreSQL", "neuroassist_global", "engine_version, engine_capability (no tenant_id)")
+}
+
+System_Ext(acs, "ACS", "JWKS + introspection")
+System_Ext(pat, "PAT", "GET /pat/gesture-types")
+System_Ext(hist, "HIST", "audit sink")
+System(station, "Patient station (gest-ui)", "edge.device token")
+System_Ext(gwy, "GWY", "API Gateway (fronts /gest)")
+
+Rel(gwy, api, "routes /gest", "HTTPS")
+Rel(station, gwy, "support-check (detectable gate)", "HTTPS")
+Rel(api, app, "calls")
+Rel(app, domain, "uses")
+Rel(app, infra, "ports → adapters")
+Rel(infra, db, "JPA", "global schema")
+Rel(infra, acs, "validate / introspect (writes)", "JWKS")
+Rel(infra, pat, "validate code on declare", "Feign")
+Rel(infra, hist, "audit on write", "Feign")
+
+note bottom of db
+  Flyway V0050+ via MIG, applied to neuroassist_global.
+end note
+@enduml

@@ -1,0 +1,90 @@
+# generator-config.yml — PAT (frontend)
+# Input for the Nx module generator consumed by /fe-architect-scaffold (and /fe-architect-promote).
+# Emitted by /fe-architect-specs neuroassist-niv PAT.
+# Sources: frontend/01-06 + adr/ADR-005 (local) + ADR-006 (shared), frontend-spec/SPEC-01..08,
+#          contracts/backend-api-cross-link.md. Authorities are BE-canonical (INV-PAT-8).
+
+module: pat
+issue_prefix: PAT
+npm_scope: "@neuroassist"
+shell_route: /patients             # caregiver command-catalog + registry surfaces
+app: neuroassist-niv-web           # shell app that lazy-loads @neuroassist/pat
+entry_lib: libs/pat                # importPath @neuroassist/pat (shared ADR-006)
+state_management: signals          # no NgRx; signal/computed + .asReadonly() (frontend/04 §6)
+
+# ── Features (libs/pat/feature-*) ──────────────────────────────────────────────
+features:
+  - name: command-catalog
+    routes: [/patients/:patientId/commands]
+    components: [CommandCatalogPageComponent]   # in-page CommandEditorPanel (new|edit) — not a route
+  - name: patient-registry
+    routes: [/patients/register]
+    components: [PatientRegistrationPageComponent]
+
+# ── Data access (libs/pat/data-access) ─────────────────────────────────────────
+# base_path is the gateway prefix /pat (NOT /api/v1). Adapter default = http (pat-service exists).
+data_access:
+  - resource: Patient
+    base_path: /pat/patients
+    operations: [register, list, get]            # deactivate/activate: BE-only, no FE screen (G2)
+    idempotent_ops: [list, get]
+  - resource: Command
+    base_path: /pat/patients/{patientId}/commands
+    operations: [listByPatient, get, create, calibrate, retire]
+    idempotent_ops: [listByPatient, get, retire]  # retire idempotent (BE §2.5)
+  - resource: GestureType
+    base_path: /pat/gesture-types
+    operations: [list, get, register]
+    idempotent_ops: [list, get]
+
+adapter_default: http                            # carry-forward: providers spec must prove http, not mock
+
+# ── Access (libs/pat/access) ───────────────────────────────────────────────────
+guards:
+  - authGuard                      # all PAT routes; session-absent redirects to login
+  - canManageCatalogGuard          # catalog + registry (AccessDecisionService; never return true)
+
+# ── Module contract (pat.contract.ts) — BE authorities (INV-PAT-8) ──────────────
+module_contract:
+  key: pat
+  label: Patients & Commands
+  icon: tune
+  section: care
+  permissions:
+    - pat.patient.create
+    - pat.patient.read
+    - pat.command.read
+    - pat.command.create
+    - pat.command.calibrate
+    - pat.command.retire
+    - pat.gesture-type.read
+    - pat.gesture-type.create
+  feature_flags:
+    pat.live-gesture-test: on      # webcam live-test affordance (tactile preview only, R3)
+    pat.compound-gestures: on      # optional second primitive (LBC Amendment 1)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ────────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/auth-session"
+  - "@neuroassist/shared/tenant-context"
+  - "@neuroassist/shared/access-decision"
+  - "@neuroassist/shared/access-http-base"
+  - "@neuroassist/shared/contracts"
+  - "@neuroassist/shared/error-model"
+  - "@neuroassist/shared/observability"
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-components"
+  - "@neuroassist/shared/ui-feedback"
+  - "@neuroassist/shared/ui-tokens"
+
+extra_dependencies: []             # getUserMedia is a browser API; no npm dependency
+
+# ── Backend cross-link ──────────────────────────────────────────────────────────
+backend_contract: ../../../../../backend/services/pat-service/contracts/api-contract.md
+
+# ── E2E ───────────────────────────────────────────────────────────────────────
+e2e:
+  project: pat-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/pat/frontend/e2e/

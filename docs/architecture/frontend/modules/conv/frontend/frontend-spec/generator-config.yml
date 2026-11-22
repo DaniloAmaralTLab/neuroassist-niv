@@ -1,0 +1,129 @@
+# generator-config.yml — CONV (frontend)
+# Input for the Nx module generator consumed by /fe-architect-promote (D-493) and /fe-architect-scaffold.
+# Emitted by /fe-architect-specs neuroassist-niv CONV.
+# Sources: frontend/01-06 + adr/ADR-005 (offline-first cached speech tree) + adr/ADR-007 (input-channel seam),
+#          BE contracts/api-contract.md (GET /conv/tree, GET /conv/audio/{assetId}, POST /conv/usage-signals),
+#          BE SPEC-10 (integrations), frontend-spec/SPEC-01..08, contracts/backend-api-cross-link.md.
+# CONV is the patient's communication RUNTIME in Patient Mode: offline-first, cache-is-truth, zero network on
+# the navigation/playback loop. Publish/retire/erase are TRN service-client only — NO CONV UI for them.
+
+module: conv
+issue_prefix: NEUR                                # project issuePrefix (project-context.json)
+npm_scope: "@neuroassist"
+shell_route: /patient/converse                    # the single operational route (SPEC-01 §1)
+app: patient-shell                                # UNDECIDED host (gap G1, shared with GEST) — placeholder; see open_items
+entry_lib: frontend/libs/conv                     # importPath @neuroassist/conv — bare name, house convention (shared ADR-006; registry label "conv-ui" to be reconciled)
+state_management: signals                         # no NgRx; signal/computed + .asReadonly(); the "big" state is the offline cache
+module_type: offline-first-runtime                # ADR-005: cache is the source of truth; sync is out of the daily loop
+
+# ── Features (frontend/libs/conv/feature-*) ────────────────────────────────────
+features:
+  - name: converse
+    routes: [/patient/converse]
+    components: [SpeechTreeNavigatorComponent, LevelHeaderComponent, ChannelBadgeComponent, PendingConfirmationBannerComponent, NodeGridComponent, TtsPlayerComponent, NavFooterComponent]
+
+# ── Data access — ports consumed EXACTLY as published by conv-service (SPEC-04) ──
+# base ${ACCESS_HTTP_BASE}/conv (NEVER /api/v1). Default adapter 'http' (conv-service published, M1.5).
+data_access:
+  - resource: TreeBundle
+    base_path: /conv/tree                         # GET; strong ETag; If-None-Match -> 304 (ADR-003)
+    operations: [get]
+    port: TREE_SNAPSHOT_PORT
+    cache: indexeddb                              # TreeCacheStore, version-keyed, cache-first
+  - resource: AudioClip
+    base_path: /conv/audio/{assetId}              # GET; 206 range; immutable Cache-Control; 410 erased
+    operations: [get]
+    port: AUDIO_ASSET_PORT
+    cache: cache-storage                          # AudioCacheStore, Blobs keyed by assetId
+  - resource: UsageSignal
+    base_path: /conv/usage-signals                # POST; 202/200 idempotent; opt-in; phraseId + timestamp, NO free text (INV-CONV-6)
+    operations: [create]
+    port: USAGE_SIGNAL_PORT
+    cache: outbound-queue                          # opportunistic flush; never blocks playback
+
+adapter_default: http                             # carry-forward scaffold:mock-adapter-default — default MUST be http; Mock serves the same <Wire> shape via the same mappers; providers spec proves default http
+
+# ── Ports / seams (in-process; NO network on the patient loop) ──────────────────
+ports:
+  - name: NAVIGATION_INTENT_PORT                  # ADR-007 — GEST pushes navigation intents in-process; default NoOpNavigationIntentPort; host overrides with the GEST-fed impl
+    default_impl: NoOpNavigationIntentPort
+    provider: host                                # Patient-Mode host wires the GEST-fed implementation (INT-FE-CONV-1)
+  - name: TREE_SNAPSHOT_PORT
+    default_impl: TreeSnapshotHttpAdapter
+  - name: AUDIO_ASSET_PORT
+    default_impl: AudioAssetHttpAdapter
+  - name: USAGE_SIGNAL_PORT
+    default_impl: UsageSignalHttpAdapter
+
+# ── Access (frontend/libs/conv/access) ─────────────────────────────────────────
+guards:
+  - patientSessionGuard                           # /patient/converse; decides from the REAL patient-session (auth-session) — mirror of GEST stationIdentityGuard; conv.* authority refinement deferred to the PLATFORM/frontend routeGuards ledger item (access-decision is a Wave-0 stub). NEVER a hardcoded true (guard:stub-permissive)
+
+# ── Module contract (conv.contract.ts) — patient-session authorities only (D-639) ──
+module_contract:
+  key: conv
+  label: Talk
+  icon: chat_bubble
+  section: patient                                # Patient-Mode surface (not the caregiver 'care' section)
+  order: 0
+  identity: patient.session                       # ACS patient-session token, not a caregiver JWT
+  permissions:                                    # verbatim from BE api-contract §10 / permission-catalogue conv module
+    - conv.tree.read                              # GET /conv/tree — gates the whole /patient/converse surface + sync
+    - conv.audio.read                             # GET /conv/audio/{assetId} — audio prefetch/fetch; lacking it -> device TTS/large text
+    - conv.usage.record                           # POST /conv/usage-signals — opt-in; off-path; never blocks playback
+  # NO publish/retire/erase UI authority — conv.tree.publish, conv.tree-version.retire, conv.audio.delete are TRN service-client only (ACS INV-3); CONV renders no surface for them.
+  # pat.patient.read is a service-client read CONV makes server-side, NOT a patient-session UI authority.
+  feature_flags:
+    conv.usage-signal.enabled: off                # opt-in per INV-CONV-6; off by default, caregiver opts in at provisioning
+    conv.switch-scan.enabled: on                  # switch-scan channel (dwell + timed scan); host/profile-configurable timing (ADR-007)
+
+# ── Cross-module writes — CONV binds ZERO tree-content writes (read-only runtime, ADR-005) ─────
+delegations: []                                   # the only CONV write is the fire-and-forget opt-in usage signal; no optimistic UI; patient confirmations are TRN's surface
+
+# ── INT items — upstream dependencies (SPEC-04 §5; cross-link §3) ───────────────
+integration_requests:
+  - id: INT-FE-CONV-1
+    owner_module: gest
+    add_export: "GEST must publish navigation intents in-process to CONV's NAVIGATION_INTENT_PORT (selectByFeatureRef/descend/back) — mirror of STATION_LIVENESS_PORT, direction reversed; GEST never HTTP-calls CONV"
+    reason: "ADR-007 input-channel seam needs a GEST-side producer feeding the host-wired NAVIGATION_INTENT_PORT (unified gesture vocabulary engineFeatureRef). Depends on the G1 Patient-Mode host."
+    blocking: false                               # touch + switch-scan work with the no-op default until GEST + host wire it
+  - id: INT-FE-CONV-2
+    owner_module: edge                            # BE SPEC-10 INT-CONV-1 (EDGE/provisioning), FE amendment
+    add_export: "Provisioning (Screen 07 / onboarding) must perform a first GET /conv/tree AND prefetch its audio into the station cache under the patient-session token, before patient handover"
+    reason: "Offline-first hard dependency R1: a never-synced + offline station is mute. BE INT-CONV-1 names the first tree read; the FE needs the AUDIO prefetched too (not only a 200 tree read) so the patient can actually speak offline."
+    blocking: false                               # architectural hard dependency, but not a code blocker for this module
+
+# ── Shell surfaces (SPEC-06) ───────────────────────────────────────────────────
+shell_surfaces:
+  - ConverseDestination                           # /patient/converse menu entry (section 'patient', order 0) — requires conv.tree.read
+  - PendingConfirmationLinkOut                     # banner link to TRN /patient/confirm-training (NOT a CONV route, SPEC-01 §2)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ───────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/access-http-base"        # base ${ACCESS_HTTP_BASE}; correlation + error-normalize interceptors
+  - "@neuroassist/shared/access-decision"         # Wave-0 stub (interface only) — authority refinement deferred to PLATFORM/frontend routeGuards
+  - "@neuroassist/shared/auth-session"            # patient-session identity read by patientSessionGuard
+  - "@neuroassist/shared/error-model"             # ProblemDetail -> AppError
+  - "@neuroassist/shared/observability"           # navigation latency, cache hit/miss, audio source, sync outcome; no phrase PII
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-feedback"             # calm session-ended / setup-issue banners (never a modal)
+  - "@neuroassist/shared/ui-tokens"               # Tailwind v4 oklch tokens; dark default; large targets for ALS/MND
+
+extra_dependencies: []                            # no NgRx; offline via Service Worker + Cache Storage + IndexedDB (browser platform); Web Speech API for the TTS fallback
+
+# ── Backend cross-link — consumed verbatim; CONV redefines no BE contract ────────
+backend_contract: ../../../../../backend/services/conv-service/contracts/api-contract.md
+
+# ── Open items (G1 host undecided — do not assume a host app) ───────────────────
+open_items:
+  - "G1 — Patient-Mode host app is UNDECIDED (shared with GEST INT-FE-GEST-003). 'app: patient-shell' above is a placeholder; CONV ships as a library facade (CONV_MODULE_DESCRIPTOR + provideConv + no-op NAVIGATION_INTENT_PORT) so it mounts into whatever host is chosen."
+  - "shared/access-decision is a Wave-0 stub; patientSessionGuard is stub-permissive at the PLATFORM/frontend routeGuards level until it is fleshed out — never a hardcoded true."
+  - "Q1 — two tokens on one station (patient-session for CONV vs edge.device for GEST/EDGE): interceptor scoping is a host concern."
+  - "registry label modules.registry[CONV].frontendLib = 'conv-ui' vs verified on-disk '@neuroassist/conv' (libs/conv) — reconcile."
+
+# ── E2E ────────────────────────────────────────────────────────────────────────
+e2e:
+  project: conv-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/conv/frontend/e2e/

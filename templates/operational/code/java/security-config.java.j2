@@ -1,0 +1,39 @@
+{#-
+  security-config.java.j2 — Spring Security MVC config (standard backend services).
+
+  Variables:
+    - pkg_full: full Java package (e.g. com.bosq.obr)
+    - access_client_lib (optional, default false): access token authorities resolved on the
+      server side by access-client-lib (candeeiro-so ADR-009 / ARCH-055). Requires the dependency
+      and the includeBuild("../access-client-lib") of the service (build-standard.gradle.kts.j2).
+-#}
+package {{ pkg_full }}.infrastructure.config;
+
+{% if access_client_lib %}import com.techlab.candeeiro.access.ResolvedAuthoritiesConverter;
+{% endif %}import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+{% if access_client_lib %}    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http, ResolvedAuthoritiesConverter resolvedAuthoritiesConverter)
+            throws Exception {
+{% else %}    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+{% endif %}        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
+                .anyRequest().authenticated()
+            )
+{% if access_client_lib %}            .oauth2ResourceServer(oauth2 -> oauth2.jwt(
+                jwt -> jwt.jwtAuthenticationConverter(resolvedAuthoritiesConverter)));
+{% else %}            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
+{% endif %}        return http.build();
+    }
+}

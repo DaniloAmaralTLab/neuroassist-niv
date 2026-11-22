@@ -1,0 +1,59 @@
+{#-
+  pyproject-service.toml.j2 - manifest of ONE service, a member of the backend
+  uv workspace (D-605 Fase 2).
+
+  Why this template exists: until now `pyproject.toml.j2` — the manifest of the
+  workspace ROOT — was rendered for the services too. Its own first line said
+  "Root pyproject.toml for <project> backend (uv workspace)", and the result was
+  that no generated Python monorepo could even install:
+
+    - every service inherited `name = "<project>-backend"`, so uv refused the
+      workspace with "Two workspace members are both named ...";
+    - every service carried `[tool.uv.workspace]`, so after renaming uv refused
+      again with "Nested workspaces are not supported".
+
+  A member declares what it *is* and what it *needs at runtime*. It declares no
+  workspace, and no tool configuration: ruff, mypy, pytest and coverage are
+  configured once at the root and apply to the whole workspace.
+
+  Variables: backend_service (fallback: module_id), project_name, project_description, python_version,
+             has_ai, has_msg_broker
+-#}
+{%- set svc = backend_service | default('', true) or ((module_id | default('svc', true)) ~ '-service') -%}
+# {{ svc }} — member of the {{ project_name }} backend uv workspace.
+# D-541: FastAPI · D-542: SQLAlchemy 2.x async · D-543: Alembic
+# Tooling config (ruff/mypy/pytest/coverage) lives in the workspace root.
+
+[project]
+name = "{{ svc }}"
+version = "0.1.0"
+description = "{{ svc }} — {{ project_description | default(project_name ~ ' backend', true) }}"
+requires-python = ">={{ python_version }}"
+dependencies = [
+    # Web framework (D-541)
+    "fastapi>=0.115.0,<0.116.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    # Persistence (D-542)
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    # Migrations (D-543)
+    "alembic>=1.14.0",
+    # Auth + observability
+    "pyjwt[crypto]>=2.9.0",
+    "structlog>=24.4.0",
+{%- if has_msg_broker %}
+    # Messaging — AMQP client for the project broker
+    "aio-pika>=9.4.0",
+{%- endif %}
+{%- if has_ai %}
+    # techlab-ai HTTP client
+    "httpx>=0.27.0",
+{%- endif %}
+]
+
+# The member is a source tree, not a distributable: uv should resolve its
+# dependencies into the shared workspace environment without trying to build it.
+[tool.uv]
+package = false

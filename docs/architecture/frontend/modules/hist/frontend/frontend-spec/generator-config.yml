@@ -1,0 +1,96 @@
+# generator-config.yml — HIST (frontend)
+# Input for the Nx module generator consumed by /fe-architect-promote (D-493) and /fe-architect-scaffold.
+# Emitted by /fe-architect-specs neuroassist-niv HIST.
+# Sources: frontend/01-06 + adr/ADR-005 (read-only reader) + shared ADR-006, frontend-spec/SPEC-01..08,
+#          contracts/backend-api-cross-link.md. Authorities are BE-canonical (D-639, BE api-contract §2).
+
+module: hist
+issue_prefix: NEUR                              # project issuePrefix (project-context.json)
+npm_scope: "@neuroassist"
+shell_route: /history                            # single navigable destination (SPEC-01 §1)
+app: neuroassist-niv-web                          # shell app that lazy-loads @neuroassist/hist
+entry_lib: frontend/libs/hist                     # importPath @neuroassist/hist — bare name, house convention (shared ADR-006)
+state_management: signals                         # no NgRx; signal/computed + .asReadonly(); read-only window, never a store
+
+# ── Features (frontend/libs/hist/feature-*) ────────────────────────────────────
+features:
+  - name: history
+    routes: [/history]
+    components: [HistoryPageComponent, PeriodFilterTabsComponent, HistoryTimelineComponent, HistoryListSkeletonComponent, HistoryEmptyStateComponent, HistoryErrorBannerComponent, PeriodSummaryCardComponent]
+  - name: trail                                   # SAFETY-GEST-1 escalation & detection-lapse section (flag hist.escalation-trail); same /history page, no new route (SPEC-01 §1)
+    routes: []                                    # section of /history, fed by the SAME hist.history.read read (SPEC-04 §1)
+    components: [EscalationTrailSectionComponent, TrailSectionHeaderComponent, TrailDegradedNoticeComponent, EscalationAttemptListComponent, DetectionLapseListComponent]
+
+# ── Data access (frontend/libs/hist/api) ───────────────────────────────────────
+# base_path is the gateway prefix /hist (NOT /api/v1). Adapter default = http (hist-service api-contract published).
+# FE consumes ONLY the caregiver timeline (BE api-contract §2). Producer ingest POST /hist/audit (§1,
+# hist.audit.record, service-client), operator trail GET /hist/audit (§3, hist.audit.read) and operator
+# erasure POST /hist/subjects/{id}/erasure (§4, hist.erasure.create) are OUT of caregiver-FE scope.
+data_access:
+  - resource: PatientHistory
+    base_path: /hist/patients/{patientId}/history
+    operations: [getHistory, loadMore]           # read-only: period=today|week|month OR from/to range; keyset cursor+size pagination (BE §2)
+    read_only: true                               # HIST binds ZERO write methods (ADR-005, SPEC-04 §3)
+
+adapter_default: http                             # carry-forward: providers spec must prove http, not mock (scaffold:mock-adapter-default)
+
+# ── Access (frontend/libs/hist/access) ─────────────────────────────────────────
+guards:
+  - authGuard                                     # /history; session-absent redirects to login
+  - canReadHistoryGuard                           # /history — AccessDecisionService.can('hist.history.read')
+# NOTE: there is NO canReadAuditGuard. The vision's hist.audit.read caregiver guard is REMOVED:
+# the escalation/detection-lapse trail is served by the SAME hist.history.read read (BE §2); hist.audit.read
+# is the OPERATOR authority on GET /hist/audit (BE §3), not a caregiver guard (G1 resolved, cross-link §2).
+
+# ── Module contract (hist.contract.ts) — BE authorities (D-639) ─────────────────
+module_contract:
+  key: hist
+  label: History
+  icon: history
+  section: care
+  order: 40
+  permissions:
+    - hist.history.read                           # the ONLY caregiver authority (timeline + escalation + detection-lapse facts, BE §2)
+  # hist.audit.read  (operator full trail, BE §3)         — NEVER a caregiver key (G1/R7 resolved)
+  # hist.audit.record (producer service-client ingest, §1) — NEVER a caregiver key
+  # hist.erasure.create (operator/service-client, §4)      — NEVER a caregiver key
+  feature_flags:
+    hist.escalation-trail: on                     # SAFETY-GEST-1 trail section on /history (same read) — off → only the event history ships
+    hist.audit-console: off                       # future operator audit console over GET /hist/audit — OFF + un-routed for the caregiver MVP (G2/Q2)
+
+# ── Cross-module write delegation (HIST owns NO write — ADR-005) ───────────────
+delegations:
+  - affordance: feedback                          # "Was it real?" on an event row (prototype parity) surfaced in HIST's list
+    owner_module: evnt                            # the write stays with EVNT
+    owner_authority: evnt.event.record            # EVNT api-contract §5.1 (vision said evnt.feedback.record — reconciled, cross-link §3)
+    wiring: shell                                 # HistoryTimelineComponent emits markFeedback → shell wires EVNT port → on success HistoryFacade.refresh() (SPEC-06 §3)
+
+# ── Shell surfaces (SPEC-06) ───────────────────────────────────────────────────
+shell_surfaces:
+  - HistoryDestination                            # /history navigable menu entry (section 'care')
+  - HistoryWidget                                 # optional read-only history widget DASH/Home MAY embed via HistShellIntegrationService (boundary interim, SPEC-06 §4)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ───────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/auth-session"
+  - "@neuroassist/shared/tenant-context"
+  - "@neuroassist/shared/access-decision"
+  - "@neuroassist/shared/access-http-base"
+  - "@neuroassist/shared/error-model"
+  - "@neuroassist/shared/observability"
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-components"
+  - "@neuroassist/shared/ui-feedback"
+  - "@neuroassist/shared/ui-tokens"               # oklch design tokens; dark default; --color-info family for the safety surfaces (never --color-alarm)
+
+extra_dependencies: []                            # HIST pulls no new dependency; no NgRx, no service worker, no poll loop
+
+# ── Backend cross-link ─────────────────────────────────────────────────────────
+backend_contract: ../../../../../backend/services/hist-service/contracts/api-contract.md
+
+# ── E2E ────────────────────────────────────────────────────────────────────────
+e2e:
+  project: hist-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/hist/frontend/e2e/

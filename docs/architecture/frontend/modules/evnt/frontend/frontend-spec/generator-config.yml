@@ -1,0 +1,146 @@
+# generator-config.yml — EVNT (frontend)
+# Input for the Nx module generator consumed by /fe-architect-scaffold (and /fe-architect-promote).
+# Emitted by /fe-architect-specs neuroassist-niv EVNT.
+# Sources: frontend/01-06 + adr/ADR-005 (local) + shared ADR-006, frontend-spec/SPEC-01..08,
+#          contracts/backend-api-cross-link.md. Authorities are BE-canonical (INV-EVNT-7, D-639).
+
+module: evnt
+issue_prefix: EVNT
+npm_scope: "@neuroassist"
+shell_route: /alarm                            # full-screen emergency takeover; EVNT has no sidebar destination
+app: neuroassist-niv-web                        # shell app that lazy-loads @neuroassist/evnt
+entry_lib: frontend/libs/evnt                   # importPath @neuroassist/evnt (shared ADR-006)
+state_management: signals                        # no NgRx; signal/computed + .asReadonly(); live projection, never a store
+
+# ── Features (frontend/libs/evnt/feature-*) ────────────────────────────────────
+features:
+  - name: alarm
+    routes: [/alarm]
+    components: [AlarmPageComponent, EmergencyAlarmComponent, AcknowledgeButtonComponent, AlarmEmptyStateComponent, AcknowledgedConfirmationComponent, MonitoringStatusBannerComponent]
+  - name: notifications
+    routes: []                                   # embedded in the Shell (Home notice slot + topbar), not routed
+    components: [RoutineNoticeListComponent, RoutineNoticeCardComponent, RoutineNoticeIndicatorComponent, NotificationCenterComponent]
+  - name: push                                   # SAFETY-1 closure: Web Push (Tier 0) enroll + channel status + escalation trail (ADR-005 / BE SPEC-11)
+    routes: []                                   # embedded on /alarm + settings slot; no new route (SPEC-01 §4)
+    components: [PushEnrollmentComponent, EscalationChannelStatusComponent, NotificationPermissionPromptComponent, EscalationAttemptsComponent, EscalationAttemptRowComponent]
+  - name: lapse                                  # SAFETY-GEST-1: distinct "station not detecting" alert (ADR-006 / BE SPEC-12)
+    routes: []                                   # embedded (Home notice region / escalation-status slot); no new route (SPEC-01 §4)
+    components: [DetectionLapseAlertComponent, DetectionLapseCardComponent, DetectionLapseEmptyStateComponent]
+
+# ── Data access (frontend/libs/evnt/api) ───────────────────────────────────────
+# base_path is the gateway prefix /evnt (NOT /api/v1). Adapter default = http (evnt-service exists).
+# FE consumes ONLY the caregiver paths (api-contract §3-§5). The device path POST /evnt/gesture-reports
+# (edge.device token, evnt.event.ingest) and GET /evnt/health are OUT of FE scope.
+data_access:
+  - resource: ActiveAlarm
+    base_path: /evnt/patients/{patientId}/active-alarm
+    operations: [getActiveAlarm]                 # the poll (server-advertised pollIntervalSeconds, SPEC-04 §5)
+  - resource: PatientEvents
+    base_path: /evnt/patients/{patientId}/events
+    operations: [listPatientEvents]              # routine-notice feed (slow poll)
+  - resource: Event
+    base_path: /evnt/events/{eventId}
+    operations: [getEvent]
+  - resource: Confirmation
+    base_path: /evnt/events/{eventId}/confirmation
+    operations: [confirmAlarm]                   # authority evnt.event.confirm
+    idempotent_ops: [confirmAlarm]               # BE §4.1 idempotent (INV-EVNT-5)
+  - resource: Feedback
+    base_path: /evnt/events/{eventId}/feedback
+    operations: [recordFeedback]                 # authority evnt.event.record; body { verdict: real|false_positive }
+    idempotent_ops: [recordFeedback]             # BE §5.1 idempotent per verdict
+  - resource: PushSubscription                   # SAFETY-1 Tier 0 — Web Push enroll (ADR-005 / BE SPEC-11 §6)
+    base_path: /evnt/push-subscriptions
+    operations: [createPushSubscription, deletePushSubscription]  # evnt.subscription.create / evnt.subscription.delete
+    idempotent_ops: [createPushSubscription, deletePushSubscription]  # BE §6.1 idempotent on (tenantId,endpoint); §6.2 idempotent for owned rows
+  - resource: EscalationAttempts                 # masked out-of-band trail (api-contract §3.4)
+    base_path: /evnt/events/{eventId}/escalation-attempts
+    operations: [listEscalationAttempts]         # authority evnt.escalation.read; destinations masked BE-side
+  - resource: DetectionLapses                    # SAFETY-GEST-1: distinct "station not detecting" list (api-contract §11)
+    base_path: /evnt/patients/{patientId}/detection-lapses
+    operations: [listDetectionLapses]            # authority evnt.detection-lapse.read; the lapse poll, reuses the monitoring model (SPEC-04 §6)
+  - resource: DetectionLapseConfirmation         # caregiver acknowledge (api-contract §12)
+    base_path: /evnt/detection-lapses/{lapseId}/confirmation
+    operations: [acknowledgeDetectionLapse]      # authority evnt.detection-lapse.confirm; stops BE escalation (LAPSE-5)
+    idempotent_ops: [acknowledgeDetectionLapse]  # BE §12.1 idempotent
+    # Service-client raise/resolve (POST /evnt/detection-lapses, .../resolution) = edge-service path — OUT of FE scope (ADR-006 §10).
+
+adapter_default: http                            # carry-forward: providers spec must prove http, not mock (incl. PUSH_PORT)
+
+# ── Access (frontend/libs/evnt/access) ─────────────────────────────────────────
+guards:
+  - authGuard                      # /alarm; session-absent redirects to login
+  - canReadEventGuard              # /alarm — AccessDecisionService.can('evnt.event.read')
+  - canConfirmEventGuard           # acknowledge handler — AccessDecisionService.can('evnt.event.confirm')
+  - canManageSubscriptionGuard     # enable/disable-push affordances — can('evnt.subscription.create'/'.delete')
+  - canReadEscalationGuard         # escalation-attempts trail — AccessDecisionService.can('evnt.escalation.read')
+  - canReadDetectionLapseGuard     # lapse alert surface — AccessDecisionService.can('evnt.detection-lapse.read')
+  - canConfirmDetectionLapseGuard  # lapse acknowledge handler — AccessDecisionService.can('evnt.detection-lapse.confirm')
+
+# ── Module contract (evnt.contract.ts) — BE authorities (INV-EVNT-7, D-639) ─────
+module_contract:
+  key: evnt
+  label: Alarms
+  icon: emergency_home
+  section: care
+  permissions:
+    - evnt.event.read
+    - evnt.event.confirm
+    - evnt.event.record            # reconciled from vision evnt.event.feedback (G-EVNT-1)
+    - evnt.subscription.create     # SAFETY-1 Tier 0 — register Web Push subscription (BE §6.1, INV-EVNT-7)
+    - evnt.subscription.delete     # SAFETY-1 — remove Web Push subscription (BE §6.2)
+    - evnt.escalation.read         # read masked out-of-band escalation trail (BE §3.4)
+    - evnt.detection-lapse.read    # SAFETY-GEST-1 — read the "station not detecting" list (BE §11, INV-EVNT-7)
+    - evnt.detection-lapse.confirm # SAFETY-GEST-1 — acknowledge a detection lapse (BE §12, stops escalation)
+  # evnt.event.ingest is a device-token authority (edge.device token) — NEVER a dashboard key (G-EVNT-5).
+  # evnt.detection-lapse.create / .resolve are service-client (edge-service) authorities — NEVER dashboard keys (G-EVNT-8).
+  feature_flags:
+    evnt.routine-notice: on        # discreet routine-notice surfaces (Home slot + topbar)
+    evnt.alarm-autoroute: on       # Shell auto-route/overlay to /alarm on an active emergency (ADR-005 §3)
+    evnt.alarm-notification: on    # foreground in-page Notification + audio cue — a courtesy, NOT a channel (SPEC-04 §5.5)
+    evnt.push-escalation: on       # real Tier 0 Web Push client (SW enroll + subscription lifecycle) — closes SAFETY-1 (SPEC-04 §5.6)
+    evnt.detection-lapse-alert: on # distinct "station not detecting" alert: lapse poll + acknowledge, reuses the monitoring model (SPEC-04 §6)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ───────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/auth-session"
+  - "@neuroassist/shared/tenant-context"
+  - "@neuroassist/shared/access-decision"
+  - "@neuroassist/shared/access-http-base"
+  - "@neuroassist/shared/error-model"
+  - "@neuroassist/shared/observability"
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-components"
+  - "@neuroassist/shared/ui-feedback"
+  - "@neuroassist/shared/ui-tokens"              # --color-alarm + all design tokens
+
+extra_dependencies: []                           # EVNT lib pulls no new dep; @angular/service-worker is a SHELL-APP dep (SPEC-06 §5)
+
+# ── Service worker (SAFETY-1 Web Push) — SHELL-APP concern, not the lib ─────────
+# One SW registration per origin; push is origin-wide → registered in neuroassist-niv-web, NOT in libs/evnt.
+# ngsw-worker.js + ngsw-config.json (or hand-written sw-push.js) + @angular/service-worker live in the shell
+# app assets/project.json. The EVNT lib owns only PushChannelFacade + PUSH_PORT + the push UI (SPEC-06 §5).
+service_worker:
+  owner: neuroassist-niv-web                      # shell app
+  strategy: "provideServiceWorker('ngsw-worker.js', { enabled: isProd, registrationStrategy: 'registerWhenStable:30000' })"
+  requires: [https-or-localhost, production-build-for-ngsw]
+  vapid_public_key_source: APP_CONFIG.vapidPublicKey  # app config, NOT an EVNT endpoint (api-contract §6)
+  dev_mode: mock-PUSH_PORT-and-stubbed-SW         # http stays the shipped default (scaffold:mock-adapter-default)
+
+# ── Shell surfaces (always-present; doc 02 §3, SPEC-06) ────────────────────────
+shell_surfaces:
+  - EmergencyTakeover                            # full-screen /alarm takeover (emergency)
+  - HomeNoticeSlot                               # RoutineNoticeList (routine)
+  - TopbarRoutineNoticeIndicator                 # discreet routine indicator (routine)
+  - EscalationChannelStatus                      # honest push/SMS/voice channel status (SAFETY-1, SPEC-02 §2a)
+  - DetectionLapseAlert                          # distinct "station not detecting" alert (SAFETY-GEST-1, SPEC-02 §2b)
+
+# ── Backend cross-link ─────────────────────────────────────────────────────────
+backend_contract: ../../../../../backend/services/evnt-service/contracts/api-contract.md
+
+# ── E2E ──────────────────────────────────────────────────────────────────────
+e2e:
+  project: evnt-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/evnt/frontend/e2e/

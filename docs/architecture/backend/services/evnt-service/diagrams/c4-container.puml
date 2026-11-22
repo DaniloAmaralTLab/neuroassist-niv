@@ -1,0 +1,37 @@
+@startuml evnt-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Container.puml
+title EVNT - Container (evnt-service, NeuroAssist NIV)
+
+System_Ext(edgeStation, "Edge Station", "edge.device token")
+System_Ext(dash, "DASH / evnt-ui", "Polls read surface")
+
+System_Boundary(evnt, "evnt-service") {
+  Container(api, "API layer", "Spring MVC", "EventReportController (device), EventController (caregiver), PushSubscriptionController, EscalationController, /evnt/health")
+  Container(app, "Application layer", "Use cases + sweep", "ingestGestureReport, getActiveAlarm, listPatientEvents, getEvent, confirmAlarm, recordFeedback, create/deletePushSubscription, listEscalationAttempts; EscalationSweep (@Scheduled)")
+  Container(domain, "Domain layer", "Aggregate + ports", "Event; Urgency/Feedback/CommandSnapshot/ReportId; EscalationPolicy; EmergencyNotificationPort")
+  Container(infra, "Infrastructure layer", "JPA + REST clients + security", "Event/PushSubscription/EscalationAttempt repos (JPA, schema-per-tenant); PAT/ACS/EDGE/HIST clients; WebPush/AwsSms/AwsVoice adapters; dual resource-server config")
+  ContainerDb(db, "PostgreSQL", "schema-per-tenant", "t_<tenantId>.event, .push_subscription, .escalation_attempt")
+}
+
+System_Ext(edge, "EDGE", "JWKS + introspect")
+System_Ext(pat, "PAT", "GET /pat/commands/{id}")
+System_Ext(acs, "ACS", "JWKS + introspect + links")
+System_Ext(hist, "HIST", "POST /audit")
+System_Ext(reg, "REG / GWY", "Eureka + Gateway")
+System_Ext(pushsvc, "Web Push service", "VAPID - Tier 0")
+System_Ext(eum, "AWS End User Messaging", "SMS/Voice - Tier 1/2, selected Region")
+
+Rel(edgeStation, api, "POST /evnt/gesture-reports")
+Rel(dash, api, "POLL active-alarm/events; confirm; feedback")
+Rel(api, app, "delegates")
+Rel(app, domain, "uses")
+Rel(app, infra, "ports -> adapters")
+Rel(infra, db, "JDBC (tenant schema)")
+Rel(infra, edge, "verify edge.device")
+Rel(infra, pat, "command snapshot", "service-client")
+Rel(infra, acs, "caregiver trust + links")
+Rel(infra, hist, "audit", "service-client")
+Rel(infra, pushsvc, "Web Push (VAPID) - Tier 0", "EmergencyNotificationPort")
+Rel(infra, eum, "SMS/Voice - Tier 1/2", "EmergencyNotificationPort")
+Rel(api, reg, "register / discover")
+@enduml

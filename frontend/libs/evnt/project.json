@@ -1,0 +1,23 @@
+{
+  "name": "evnt",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/evnt/src",
+  "projectType": "library",
+  "tags": ["scope:evnt", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/evnt/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/evnt"],
+      "options": {
+        "jestConfig": "libs/evnt/jest.config.ts"
+      }
+    }
+  }
+}

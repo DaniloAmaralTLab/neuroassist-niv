@@ -1,0 +1,66 @@
+{#-
+  application-standard.yml.j2 — Standard service profile (with JPA, Eureka, JWT).
+
+  Variables (auto-injected): project_name, package_base, migrations_service
+  Variables (passed): meta, pkg_full, access_client_lib (opcional, default false)
+-#}
+spring:
+  application:
+    name: {{ meta.service }}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: false  # Migrations managed by {{ migrations_service }} (V7+)
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/{{ meta.package_suffix }}_dev}
+    username: ${DB_USER:{{ meta.package_suffix }}}
+    password: ${DB_PASS:{{ meta.package_suffix }}_dev_pass}
+    hikari:
+      maximum-pool-size: 10
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/{{ project_name }}}
+
+server:
+  port: {{ meta.port }}
+  # Headroom above the gateway cap (16KB): the gateway and Feign add headers to the
+  # user's Authorization. Tomcat's default (8KB) answers an HTML 400 to a large JWT.
+  max-http-request-header-size: 24KB
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+{% if access_client_lib %}# ADR-009: access token authorities resolved in WRKS (access-client-lib).
+# Empty secret = user token without the claim receives 503 (fail-closed).
+candeeiro:
+  access-client:
+    wrks-url: ${WRKS_SERVICE_URL:http://localhost:8081}
+    client-id: ${WRKS_SERVICE_CLIENT_ID:{{ meta.service }}}
+    client-secret: ${WRKS_SERVICE_CLIENT_SECRET:}
+
+{% endif %}logging:
+  pattern:
+    console: "%d{HH:mm:ss} %-5level [%X{correlationId}] [%X{tenantId}] [%X{userId}] %logger{36} - %msg%n"
+  level:
+    {{ pkg_full }}: INFO

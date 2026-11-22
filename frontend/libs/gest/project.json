@@ -1,0 +1,23 @@
+{
+  "name": "gest",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/gest/src",
+  "projectType": "library",
+  "tags": ["scope:gest", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/gest/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/gest"],
+      "options": {
+        "jestConfig": "libs/gest/jest.config.ts"
+      }
+    }
+  }
+}

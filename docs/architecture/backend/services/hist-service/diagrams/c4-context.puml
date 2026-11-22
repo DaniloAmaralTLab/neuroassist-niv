@@ -1,0 +1,30 @@
+@startuml hist-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title HIST — System Context (NeuroAssist NIV)
+
+Person(caregiver, "Family Caregiver / Clinic Coordinator", "Reads patient-scoped history via DASH")
+Person(operator, "Compliance / Platform Operator", "Queries the full audit trail for incident & access review")
+
+System_Boundary(hist_b, "HIST") {
+  System(hist, "hist-service", "Append-only audit sink + caregiver-facing history read model")
+}
+
+System_Ext(acs, "ACS (acs-service)", "Identity provider: JWKS + service-client identity")
+System_Ext(pat, "PAT (pat-service)", "Audit writer")
+System_Ext(edge, "EDGE (edge-service)", "Audit writer")
+System_Ext(evnt, "EVNT (evnt-service)", "Audit writer")
+System_Ext(gest, "GEST (gest-service)", "Audit writer (global-schema facts)")
+System_Ext(dash, "DASH (dash-service)", "History reader / caregiver dashboard host")
+System_Ext(mig, "MIG (neuroassist-niv-migrations)", "Centralized Flyway runner")
+
+Rel(acs, hist, "POST /hist/audit (service-client)", "sync REST")
+Rel(pat, hist, "POST /hist/audit", "sync REST")
+Rel(edge, hist, "POST /hist/audit", "sync REST")
+Rel(evnt, hist, "POST /hist/audit", "sync REST")
+Rel(gest, hist, "POST /hist/audit (global facts)", "sync REST")
+Rel(dash, hist, "GET /hist/patients/{id}/history", "sync REST, caregiver JWT")
+Rel(caregiver, dash, "Reviews history")
+Rel(operator, hist, "GET /hist/audit", "sync REST, operator JWT")
+Rel(hist, acs, "Validates JWT via JWKS", "sync REST")
+Rel(mig, hist, "Applies HIST Flyway (V0060-V0069)", "DDL")
+@enduml

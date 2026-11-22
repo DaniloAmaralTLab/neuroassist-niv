@@ -1,0 +1,121 @@
+issue_prefix: EVNT
+base_path: /evnt
+service: evnt-service
+type: standard
+port: 8086
+
+domain:
+  aggregates:
+    - Event
+    - PushSubscription
+    - DetectionLapse                 # ADR-006 / SAFETY-GEST-1 / data-model §2.4
+  entities:
+    - EscalationAttempt
+
+# D-642: endpoints reachable WITHOUT a token (SecurityConfig permitAll)
+public_paths:
+  - GET /evnt/health
+
+application_services:
+  - name: GestureReportService
+    path: /gesture-reports
+    resource: event          # D-641 -> evnt.event.ingest (EDGE token carries it)
+    operations:
+      - ingest
+
+  - name: PatientEventService
+    path: /patients/{patientId}
+    resource: event          # D-641 -> evnt.event.read
+    operations:
+      - getActiveAlarm
+      - listEvents
+
+  - name: EventService
+    path: /events
+    operations:
+      - get
+      - confirm
+      - record
+
+  - name: EscalationAttemptService
+    path: /events/{eventId}/escalation-attempts
+    resource: escalation     # D-641 -> evnt.escalation.read
+    operations:
+      - listEscalationAttempts
+
+  - name: PushSubscriptionService
+    path: /push-subscriptions
+    resource: subscription   # D-641 -> evnt.subscription.create/delete
+    operations:
+      - create
+      - delete
+
+  - name: DetectionLapseService      # ADR-006 / SAFETY-GEST-1 (EVNT-030/031/032)
+    path: /detection-lapses
+    resource: detection-lapse        # -> evnt.detection-lapse.create/resolve/confirm
+    operations:
+      - create                       # raise (service-client edge-service, api-contract §10.1)
+      - resolve                      # EDGE resolve (api-contract §10.2)
+      - confirm                      # caregiver acknowledge (api-contract §12.1)
+
+  - name: PatientDetectionLapseService  # ADR-006 / SAFETY-GEST-1 (EVNT-033)
+    path: /patients/{patientId}/detection-lapses
+    resource: detection-lapse           # -> evnt.detection-lapse.read
+    operations:
+      - list                            # caregiver "station not detecting" surface (api-contract §11.1)
+
+enums:
+  Urgency:
+    - emergency
+    - routine
+  Feedback:
+    - not_evaluated
+    - real
+    - false_positive
+  Tier:        # ordinal = escalation_attempt.tier smallint (0 push, 1 sms, 2 voice)
+    - TIER_0
+    - TIER_1
+    - TIER_2
+  Channel:
+    - web_push
+    - sms
+    - voice
+  EscalationStatus:
+    - pending
+    - sent
+    - failed
+  LapseCause:                       # ADR-006 / data-model §2.4 — ck_detection_lapse_cause
+    - NOT_RUNNING
+    - HEARTBEAT_STOPPED
+  LapseDetectionState:              # ADR-006 / data-model §2.4 — ck_detection_lapse_state (nullable)
+    - RUNNING
+    - PAUSED
+    - DEGRADED
+    - UNAVAILABLE
+    - UNKNOWN
+  LapseStatus:                      # ADR-006 / data-model §2.4 — ck_detection_lapse_status
+    - open
+    - resolved
+    - acknowledged
+
+feign_clients:
+  - name: EdgeClient
+    service: edge-service
+    url_prop: edge.base-url
+  - name: PatCommandClient
+    service: pat-service
+    url_prop: pat.base-url
+  - name: AcsClient
+    service: acs-service
+    url_prop: acs.base-url
+  - name: HistAuditClient
+    service: hist-service
+    url_prop: hist.base-url
+
+consumed_events: []
+
+events:
+  published: []
+
+outbound_ports:
+  - EmergencyNotificationPort

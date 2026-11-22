@@ -1,0 +1,34 @@
+@startuml edge-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Context.puml
+title EDGE — Context (edge-service, NeuroAssist NIV)
+
+Person(coord, "Clinic Coordinator", "Enrolls, pairs, reactivates, deactivates, unpairs, revokes a device")
+Person(care, "Family Caregiver", "Reads device status; may revoke")
+System_Ext(station, "Edge device / station", "Browser agent (ADR-014): claims pairing code, records heartbeat, reads cached catalog with the edge.device token")
+
+System(edge, "EDGE (edge-service)", "Device lifecycle: enroll/pair/heartbeat/catalog; mints & governs the edge.device token; watchdog liveness")
+
+System_Ext(gwy, "GWY (API Gateway)", "Fronts EDGE; propagates X-Correlation-Id")
+System_Ext(acs, "ACS (acs-service)", "JWKS trust anchor for human tokens; issues EDGE's service-client token; validates (not mints) edge.device tokens; provisions the patient-session referencing deviceId (G4)")
+System_Ext(pat, "PAT (pat-service)", "Command catalog source; EDGE pulls GET /pat/patients/{id}/commands with service-client pat.command.read, ETag/304")
+System_Ext(hist, "HIST (hist-service)", "Audit sink for device-lifecycle actions")
+System_Ext(evnt, "EVNT (evnt-service)", "Gesture reports via the edge.device token (G5); detection-lapse raise/resolve from the EDGE backend (G6, ADR-005) — EVNT owns the escalation ladder (push->SMS->voice, EVNT ADR-005)")
+
+Rel(coord, gwy, "Manage devices", "HTTPS")
+Rel(care, gwy, "Read status / revoke", "HTTPS")
+Rel(station, gwy, "Pair / heartbeat / read catalog", "HTTPS")
+Rel(gwy, edge, "Routes /edge/**")
+Rel(edge, acs, "JWKS + introspect + service-client token", "sync REST")
+Rel(edge, pat, "Catalog pull (service-client, ETag/304)", "sync REST")
+Rel(edge, hist, "Audit device-lifecycle actions", "sync REST")
+Rel(station, evnt, "Report gesture (edge.device token)", "HTTPS — G5 EVNT-owned")
+Rel(edge, evnt, "Raise/resolve detection lapse (service-client, idempotent)", "sync REST — G6 ADR-005")
+Rel(acs, edge, "Confirm device paired (G4)", "GET /edge/devices/{id}")
+
+note right of edge
+  Messaging disabled — all relationships sync REST.
+  EDGE is both an ACS resource server (human endpoints)
+  and the device authorization endpoint (mints edge.device,
+  publishes /edge/.well-known/jwks.json — ADR-002).
+end note
+@enduml

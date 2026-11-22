@@ -1,0 +1,151 @@
+{#-
+  tests/architecture/test_layer_contracts.py.j2 — hexagonal layer contracts as a
+  pytest suite (D-605 Fase 2).
+
+  Why pytest and not import-linter: the ADR promised "import-linter contracts
+  fail the build" and neither the dependency nor the contracts existed. Closing
+  that could have meant adding import-linter — but the same choice came up on the
+  Node side (D-603) and was refused there: adding a dependency so a gate can
+  start is a worse trade than expressing the constraint with what is already
+  installed. pytest is already a dev dependency; the AST is in the standard
+  library. This costs more code and zero dependencies.
+
+  It is the Python counterpart of ArchUnit RULE-01..09 and of the scoped
+  `no-restricted-imports` in the Node `eslint.config.mjs`.
+
+  Variables: package_name, module_id
+-#}
+"""Hexagonal layer contracts for {{ module_id }} — the ArchUnit equivalent.
+
+Parses every module under ``src/`` and asserts what each layer is allowed to
+import. Pure AST inspection: nothing is imported, so a broken module fails the
+contract it violates instead of breaking collection.
+"""
+
+from __future__ import annotations
+
+import ast
+from pathlib import Path
+
+import pytest
+
+PACKAGE_ROOT = Path(__file__).resolve().parents[2]
+"""``src/{{ package_name }}/{{ module_id }}`` — the module this suite guards."""
+
+DOMAIN = PACKAGE_ROOT / "domain"
+APPLICATION = PACKAGE_ROOT / "application"
+INFRASTRUCTURE = PACKAGE_ROOT / "infrastructure"
+FASTAPI_LAYER = PACKAGE_ROOT / "fastapi"
+
+# RULE-01/02 — the domain is pure: no web framework, no ORM, no driver.
+FORBIDDEN_IN_DOMAIN = (
+    "fastapi",
+    "starlette",
+    "sqlalchemy",
+    "asyncpg",
+    "alembic",
+    "pydantic_settings",
+    "aio_pika",
+)
+
+# RULE-03 — the application layer orchestrates; it does not touch the ORM or the
+# web framework directly. It depends on ports declared in the domain.
+FORBIDDEN_IN_APPLICATION = ("fastapi", "starlette", "sqlalchemy", "asyncpg")
+
+
+def _imports_of(path: Path) -> list[tuple[str, int]]:
+    """Return ``(module, lineno)`` for every import in ``path``."""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    found: list[tuple[str, int]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            found.extend((alias.name, node.lineno) for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            found.append((node.module, node.lineno))
+    return found
+
+
+def _python_files(root: Path) -> list[Path]:
+    if not root.is_dir():
+        return []
+    return [p for p in sorted(root.rglob("*.py")) if "__pycache__" not in p.parts]
+
+
+def _violations(root: Path, forbidden: tuple[str, ...]) -> list[str]:
+    out: list[str] = []
+    for file in _python_files(root):
+        for module, lineno in _imports_of(file):
+            head = module.split(".")[0]
+            if head in forbidden:
+                rel = file.relative_to(PACKAGE_ROOT)
+                out.append(f"{rel}:{lineno} imports {module!r}")
+    return out
+
+
+# The composition root is where the hexagon is closed: `main.py` owns the engine
+# lifespan and `dependencies.py` builds the adapters. Exempting them is not a
+# loophole — a rule that forbids the composition root from naming an adapter
+# forbids wiring the application at all. ArchUnit exempts its equivalent.
+COMPOSITION_ROOT = {"main.py", "dependencies.py"}
+
+
+def test_domain_has_source_files() -> None:
+    """A contract suite that guards an empty tree proves nothing."""
+    assert _python_files(DOMAIN), (
+        f"no python sources under {DOMAIN} — the layer contracts below would "
+        f"pass vacuously"
+    )
+
+
+@pytest.mark.parametrize("forbidden", FORBIDDEN_IN_DOMAIN)
+def test_domain_does_not_import(forbidden: str) -> None:
+    """RULE-01/02 — the domain stays free of framework and persistence."""
+    bad = _violations(DOMAIN, (forbidden,))
+    assert not bad, (
+        f"domain/ must not import {forbidden!r}; invert the dependency through a "
+        f"port declared in the domain.\n  " + "\n  ".join(bad)
+    )
+
+
+@pytest.mark.parametrize("forbidden", FORBIDDEN_IN_APPLICATION)
+def test_application_does_not_import(forbidden: str) -> None:
+    """RULE-03 — the application layer depends on ports, not on adapters."""
+    bad = _violations(APPLICATION, (forbidden,))
+    assert not bad, (
+        f"application/ must not import {forbidden!r}; depend on the port and let "
+        f"infrastructure implement it.\n  " + "\n  ".join(bad)
+    )
+
+
+def test_domain_does_not_import_outer_layers() -> None:
+    """RULE-04 — dependencies point inward, always."""
+    bad: list[str] = []
+    for file in _python_files(DOMAIN):
+        for module, lineno in _imports_of(file):
+            if any(seg in module.split(".") for seg in
+                   ("application", "infrastructure", "fastapi")):
+                bad.append(f"{file.relative_to(PACKAGE_ROOT)}:{lineno} -> {module}")
+    assert not bad, (
+        "domain/ must not import application/, infrastructure/ or fastapi/.\n  "
+        + "\n  ".join(bad)
+    )
+
+
+def test_web_layer_does_not_import_persistence_models() -> None:
+    """RULE-05 — the ORM row never reaches the HTTP boundary.
+
+    The web layer maps through the domain and its schemas; letting a persistence
+    model surface in a route couples the wire format to the table.
+    """
+    bad: list[str] = []
+    for file in _python_files(FASTAPI_LAYER):
+        if file.name in COMPOSITION_ROOT:
+            continue
+        for module, lineno in _imports_of(file):
+            parts = module.split(".")
+            if "infrastructure" in parts and "persistence" in parts:
+                bad.append(f"{file.relative_to(PACKAGE_ROOT)}:{lineno} -> {module}")
+    assert not bad, (
+        "fastapi/ must not import infrastructure/persistence/ directly; go "
+        "through the application layer.\n  " + "\n  ".join(bad)
+    )

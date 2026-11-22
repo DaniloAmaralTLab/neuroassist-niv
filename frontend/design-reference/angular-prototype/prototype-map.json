@@ -1,0 +1,194 @@
+{
+  "project": "neuroassist-niv",
+  "scope": "@neuroassist",
+  "angularVersion": "21",
+  "nxVersion": "22",
+  "theme": "dark",
+  "density": 1.2,
+  "colors": {
+    "primary": "#00B4A6",
+    "warning": "#F59E0B",
+    "ai": "#8B5CF6"
+  },
+  "screens": [
+    {
+      "id": "entry",
+      "label": "Entry",
+      "icon": "•",
+      "ngComponent": "EntryComponent",
+      "ngSelector": "app-entry",
+      "ngRoute": "/entry",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/entry/entry.component.ts",
+      "wireframeRef": "§5.1–5.5",
+      "objective": "Entry/login screen — a brand moment, outside the navigation shell. Establishes the product's calm, trustworthy identity before any operational data appears.",
+      "componentes": [
+        "Logo (dark-background version — `logo-white.png`)",
+        "Title + subtitle (brand visual tone)",
+        "Single CTA button \"Enter the dashboard\""
+      ],
+      "hasAiDrawer": false
+    },
+    {
+      "id": "home",
+      "label": "Home",
+      "icon": "🏠",
+      "ngComponent": "HomeComponent",
+      "ngSelector": "app-home",
+      "ngRoute": "/home",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/home/home.component.ts",
+      "wireframeRef": "§5.1–5.5",
+      "objective": "Answer, within 2 seconds of reading, \"Is Márcio okay?\" — the product's central question (Principle 2.1). Also shows the edge device status without requiring extra navigation (Principle 2.6), covering flow 4.6.",
+      "componentes": [
+        "StatusCard (large icon + state text + timestamp)",
+        "DeviceStatusBadge (online/offline + last sync) — also present in the Topbar (3.2.B)",
+        "Quick link to the day's History"
+      ],
+      "hasAiDrawer": true
+    },
+    {
+      "id": "alarm",
+      "label": "Alarm",
+      "icon": "•",
+      "ngComponent": "AlarmComponent",
+      "ngSelector": "app-alarm",
+      "ngRoute": "/alarm",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/alarm/alarm.component.ts",
+      "wireframeRef": "§5.1–5.5",
+      "objective": "Be absolutely unmistakable at the moment Márcio needs help (Principle 2.2) and require explicit human confirmation before returning to the normal state (Principle 2.3). Covers flow 4.2 (the product's parent flow). *(Amendment 1)* This screen is **exclusive to `emergency` urgency commands** of the",
+      "componentes": [
+        "AlarmOverlay (full-bleed, `--color-alarm` color, replaces any active screen)",
+        "Event timestamp",
+        "Single confirmation button (no other action available — total focus)"
+      ],
+      "hasAiDrawer": false
+    },
+    {
+      "id": "history",
+      "label": "History",
+      "icon": "•",
+      "ngComponent": "HistoryComponent",
+      "ngSelector": "app-history",
+      "ngRoute": "/history",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/history/history.component.ts",
+      "wireframeRef": "§5.1–5.5",
+      "objective": "Allow the caregiver to review the day's/week's/month's events in human language (Principle 2.5) and record false-positive/false-negative feedback (flow 4.7). Covers flow 4.4.",
+      "componentes": [
+        "FilterTabs (today/week/month)",
+        "EventListItem *(Amendment 1)* — shows the **command label** (`Event.command.label`), no longer a fixed gesture text (e.g., \"water\" or \"Frog\", in quotes — it is the family's word, not a description by the system); urgency badge (emergency/routine) next to the label",
+        "Feedback action (\"Was it real?\" → sets `Event.feedback`)"
+      ],
+      "hasAiDrawer": false
+    },
+    {
+      "id": "calibration",
+      "label": "Calibration",
+      "icon": "•",
+      "ngComponent": "CalibrationComponent",
+      "ngSelector": "app-calibration",
+      "ngRoute": "/calibration",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/calibration/calibration.component.ts",
+      "wireframeRef": "§5.1–5.5",
+      "objective": "Allow a non-technical person to manage Márcio's **command catalog** (add, edit, remove) and calibrate each command independently — gesture, sensitivity and urgency level (Principle 2.4). Covers flow 4.3, now extended from \"1 gesture\" to \"N commands, each with its own cal",
+      "componentes": [
+        "CommandList *(new)* — lists the catalog, each item shows label, urgency badge (`--color-alarm` color for emergency, neutral color for routine), gesture (1 or 2 primitives) and sensitivity; action to open the editor or remove",
+        "CommandEditor *(new)* — form for the individual command, reuses the fields below; opens for \"New command\" or for editing an existing one",
+        "LabelInput — free-text field for the label (the family writes their own code word, e.g., \"water\", \"Frog\" — no suggestion or validation of meaning)",
+        "UrgencySelector *(new)* — binary emergency/routine choice, with an inline explanation that emergency triggers Screen 02 (full-bleed) and routine triggers only the toast (§3.2.E)",
+        "GestureSelector (dropdown with visual examples, not technical names) — used once for the main primitive, and optionally once more for the secondary primitive (compound gesture)",
+        "SensitivitySlider (visual, 3-5 named levels, not raw numeric values)",
+        "TestLiveButton (tests the gesture combination live before saving — critical when there are 2 primitives, since the risk of a false negative is higher, see LBC §12 Amendment 1)",
+        "SaveButton / RemoveButton (per command)"
+      ],
+      "hasAiDrawer": false
+    },
+    {
+      "id": "onboarding",
+      "label": "Onboarding",
+      "icon": "rocket_launch",
+      "ngComponent": "OnboardingComponent",
+      "ngSelector": "app-onboarding",
+      "ngRoute": "/onboarding",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/onboarding/onboarding.component.ts",
+      "wireframeRef": "§5.1–5.5",
+      "objective": "Initial registration of the tenant, patient and edge device pairing — carried out once by Danilo Amaral (technical lead), not by the caregiver day to day. Covers flow 4.5.",
+      "componentes": [
+        "Step wizard (tenant → patient → device → first command → invitation)",
+        "DevicePairingStatus (pairing-in-progress indicator)",
+        "InviteCaregiverForm"
+      ],
+      "hasAiDrawer": false
+    },
+    {
+      "id": "conv-tree",
+      "label": "Converse",
+      "icon": "chat_bubble",
+      "ngComponent": "ConvTreeComponent",
+      "ngSelector": "app-conv-tree",
+      "ngRoute": "/patient/converse",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/conv-tree/conv-tree.component.ts",
+      "wireframeRef": "§5.1–5.5 — Screen 06",
+      "objective": "Category → phrase navigation of the speech tree, input-channel agnostic (gesture via GEST reusing engineFeatureRef, or direct touch) — Amendment 3 (2026-08-30), ADR-013 accepted. Runs inside the patient's restricted shell (patient-shell.component.ts), not the caregiver's shell.",
+      "componentes": [
+        "SpeechTreeNavigator (grid of nodes at the active level)",
+        "InputChannelIndicator (active-channel badge — touch/gesture)",
+        "TTSPlayer (simulated in the prototype)",
+        "BackButton"
+      ],
+      "hasAiDrawer": false
+    },
+    {
+      "id": "phone-activation",
+      "label": "Activate patient's mobile phone",
+      "icon": "smartphone",
+      "ngComponent": "PhoneActivationComponent",
+      "ngSelector": "app-phone-activation",
+      "ngRoute": "/patient-phone",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/phone-activation/phone-activation.component.ts",
+      "wireframeRef": "§5.1–5.5 — Screen 07",
+      "objective": "Caregiver provisions the PatientSession (ADR-012 accepted, Option C) and pairs the mobile phone as an edge device (ADR-014). Session does not expire; revocation always visible (constraint SEC-001). Reachable from Onboarding, not from the daily sidebar.",
+      "componentes": [
+        "DevicePairingStatus (reused from Onboarding)",
+        "PersistentSessionWarning",
+        "ActiveSessionsList",
+        "RevokeButton"
+      ],
+      "hasAiDrawer": false
+    },
+    {
+      "id": "training",
+      "label": "Training",
+      "icon": "auto_awesome",
+      "ngComponent": "TrainingComponent",
+      "ngSelector": "app-training",
+      "ngRoute": "/training",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/training/training.component.ts",
+      "wireframeRef": "§5.1–5.5 — Screen 08",
+      "objective": "Caregiver starts/watches a conversation with the LLM (Claude/Anthropic API) to propose new CONV categories/phrases (English only) — Amendment 4 (2026-08-31), ADR-016 accepted. Runs in the caregiver's shell (DASH), occasional session, not daily. Scripted conversation in the prototype, no real API call.",
+      "componentes": [
+        "ChatConversationPanel (scripted in the prototype)",
+        "LocaleTabs (removed — English-only product, see ADR-018-english-only-product)",
+        "ProposedNodeCard (dual confirmation indicator)",
+        "EndSessionButton"
+      ],
+      "hasAiDrawer": true
+    },
+    {
+      "id": "training-confirmation",
+      "label": "Confirm new phrases",
+      "icon": "auto_awesome",
+      "ngComponent": "TrainingConfirmationComponent",
+      "ngSelector": "app-training-confirmation",
+      "ngRoute": "/patient/confirm-training",
+      "sourceTs": "apps/neuroassist-niv-web/src/app/screens/training-confirmation/training-confirmation.component.ts",
+      "wireframeRef": "§5.1–5.5 — Screen 09",
+      "objective": "Patient confirms/adjusts/rejects proposals already approved by the caregiver (Screen 08), at their own pace — Amendment 4 (2026-08-31), ADR-016 accepted (Dual Authorization, ADR-018). Runs inside the patient's restricted shell (patient-shell.component.ts). Reachable from the banner on Screen 06 when there are pending items.",
+      "componentes": [
+        "PendingConfirmationList",
+        "ConfirmButton",
+        "AdjustButton (short variations, no free editing)",
+        "RejectButton"
+      ],
+      "hasAiDrawer": false
+    }
+  ]
+}

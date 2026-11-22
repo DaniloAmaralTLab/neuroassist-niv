@@ -1,0 +1,140 @@
+{#-
+  build-standard.gradle.kts.j2 — standard service (non-gateway, non-registry).
+
+  Variables:
+    - meta: ToolMeta object (uses meta.service)
+    - gcloud_bom_line: pre-computed BOM line (empty string if not needed)
+    - extra_impl_section: pre-computed implementation deps block
+    - extra_test_section: pre-computed test deps block
+    - bdd_block: pre-computed cucumber block
+    - package_base: e.g. com.bosq (auto-injected from context)
+    - access_client_lib (optional, default false): see security-config.java.j2
+-#}
+plugins {
+    id("org.springframework.boot") version "{{ spring_boot_version }}"
+    id("io.spring.dependency-management") version "{{ spring_dependency_management_version }}"
+    id("com.diffplug.spotless") version "6.25.0"
+    java
+}
+
+group = "{{ package_base }}"
+version = "0.0.1-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of({{ java_version }})
+    }
+}
+
+repositories { mavenCentral() }
+
+extra["springCloudVersion"] = "2025.0.1"
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+        mavenBom("org.testcontainers:testcontainers-bom:1.20.4")
+{{ gcloud_bom_line -}}
+    }
+}
+
+dependencies {
+    // Web
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    // Security
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+{% if access_client_lib %}    // Authorities resolvidas no WRKS (ADR-009); settings.gradle.kts: includeBuild("../access-client-lib")
+    implementation("com.techlab.candeeiro.access:access-client-lib:0.1.0-SNAPSHOT")
+{% endif %}
+    // Persistence (schema managed by {{ migrations_service }})
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    runtimeOnly("org.postgresql:postgresql")
+
+    // Messaging (D-490: spring-boot-starter-kafka does not exist; correct artifact is spring-kafka)
+    {% if events_broker == "kafka" -%}
+    implementation("org.springframework.kafka:spring-kafka")
+    {%- else -%}
+    implementation("org.springframework.boot:spring-boot-starter-artemis")
+    {%- endif %}
+
+    // Service Discovery + HTTP Clients
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+    implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3")
+
+    // Observability
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+
+    // Lombok
+    compileOnly("org.projectlombok:lombok:1.18.34")
+    annotationProcessor("org.projectlombok:lombok:1.18.34")
+    testCompileOnly("org.projectlombok:lombok:1.18.34")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.34")
+{{ extra_impl_section -}}
+
+    // Test
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    {% if events_broker == "kafka" -%}
+    // Kafka: EmbeddedKafka for unit tests, Testcontainers for integration tests
+    testImplementation("org.springframework.kafka:spring-kafka-test")
+    {%- else -%}
+    // ActiveMQ: Artemis embedded (spring.artemis.mode=embedded) — no testcontainers:activemq
+    testImplementation("org.apache.activemq:artemis-jakarta-server:2.31.2")
+    {%- endif %}
+{{ extra_test_section -}}
+{% if bdd_block %}
+
+{{ bdd_block }}
+{% endif %}
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+// D-636 (candeeiro-so architecture-master-plan.md): without this split, `./gradlew test`
+// runs CucumberIT and ApplicationContextLoadsIT together, pulling in the full Spring context
+// and Testcontainers on every unit-test run — causing cascading IllegalStateException failures
+// that were mistakenly investigated as code regressions across multiple /be-validator runs.
+// Confirmed absent from 14/19 scaffolded services before this fix was applied to the template.
+
+// Unit tests: *Test.class only (fast — no Docker, no Spring full context)
+tasks.test {
+    include("**/*Test.class")
+    exclude("**/*IT.class")
+}
+
+// Integration tests: *IT.class (CucumberIT + ApplicationContextLoadsIT + Testcontainers)
+val integrationTest = tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests (CucumberIT + Testcontainers)"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    include("**/*IT.class")
+    shouldRunAfter(tasks.test)
+}
+
+tasks.register("architectureCheck") {
+    dependsOn(tasks.test)
+    doFirst { logger.lifecycle("Running ArchUnit checks via :{{ meta.service }}:test...") }
+}
+
+// Spotless — canonical formatting (google-java-format AOSP, 4 spaces)
+// Run: ./gradlew :{{ meta.service }}:spotlessApply
+// Check: ./gradlew :{{ meta.service }}:spotlessCheck
+spotless {
+    java {
+        target("src/**/*.java")
+        googleJavaFormat("1.22.0").aosp()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "edge",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/edge/src",
+  "projectType": "library",
+  "tags": ["scope:edge", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/edge/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/edge"],
+      "options": {
+        "jestConfig": "libs/edge/jest.config.ts"
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "pat-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/pat-e2e/src",
+  "projectType": "application",
+  "tags": [
+    "scope:pat",
+    "type:e2e"
+  ],
+  "implicitDependencies": [
+    "pat"
+  ],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "options": {
+        "config": "apps/pat-e2e/playwright.config.ts"
+      }
+    }
+  }
+}

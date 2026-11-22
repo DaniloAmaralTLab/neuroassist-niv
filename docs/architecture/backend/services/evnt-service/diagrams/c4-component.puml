@@ -1,0 +1,51 @@
+@startuml evnt-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Component.puml
+title EVNT - Component (hexagonal packages, java: api/application/domain/infrastructure)
+
+Container_Boundary(api, "api") {
+  Component(reportCtrl, "EventReportController", "Spring MVC", "POST /evnt/gesture-reports (edge.device)")
+  Component(eventCtrl, "EventController", "Spring MVC", "GET active-alarm/events/{id}; POST confirmation/feedback (caregiver)")
+  Component(health, "HealthController", "Spring MVC", "GET /evnt/health")
+}
+
+Container_Boundary(appl, "application") {
+  Component(ingest, "IngestGestureReport", "use case", "snapshot urgency+label; dedup; audit EventGenerated")
+  Component(readAlarm, "GetActiveAlarm", "use case", "read-time query (ADR-010)")
+  Component(listEv, "ListPatientEvents", "use case", "")
+  Component(getEv, "GetEvent", "use case", "")
+  Component(confirm, "ConfirmAlarm", "use case", "emergency-only; idempotent; audit AlarmConfirmed")
+  Component(feedback, "RecordFeedback", "use case", "audit FeedbackRecorded")
+}
+
+Container_Boundary(dom, "domain") {
+  Component(event, "Event", "aggregate root", "two axes: confirmation, feedback")
+  Component(vo, "VOs", "Urgency / Feedback / CommandSnapshot / ReportId", "")
+  Component(ports, "Ports", "interfaces", "EventRepository, CommandCatalogPort, CaregiverLinkPort, DeviceTokenIntrospectionPort, AuditPort")
+}
+
+Container_Boundary(inf, "infrastructure") {
+  Component(repo, "EventRepositoryJpa", "adapter", "schema-per-tenant")
+  Component(patClient, "PatCommandClient", "adapter", "GET /pat/commands/{id} (service-client)")
+  Component(acsClient, "AcsClient", "adapter", "JWKS + introspect + links")
+  Component(edgeClient, "EdgeTokenClient", "adapter", "JWKS + introspect")
+  Component(histClient, "HistAuditClient", "adapter", "POST /audit")
+  Component(sec, "DualResourceServerConfig", "security", "ACS + EDGE issuers")
+}
+
+Rel(reportCtrl, ingest, "")
+Rel(eventCtrl, readAlarm, "")
+Rel(eventCtrl, listEv, "")
+Rel(eventCtrl, getEv, "")
+Rel(eventCtrl, confirm, "")
+Rel(eventCtrl, feedback, "")
+Rel(ingest, ports, "uses")
+Rel(confirm, ports, "uses")
+Rel(feedback, ports, "uses")
+Rel(readAlarm, ports, "uses")
+Rel(ports, event, "manipulates")
+Rel(repo, ports, "implements EventRepository")
+Rel(patClient, ports, "implements CommandCatalogPort")
+Rel(acsClient, ports, "implements CaregiverLinkPort")
+Rel(edgeClient, ports, "implements DeviceTokenIntrospectionPort")
+Rel(histClient, ports, "implements AuditPort")
+@enduml

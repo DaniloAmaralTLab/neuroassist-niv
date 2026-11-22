@@ -1,0 +1,98 @@
+service: edge-service
+type: standard
+port: 8084
+issue_prefix: EDGE
+base_path: /edge
+
+domain:
+  aggregates:
+    - DevicePairingCode
+    - EdgeDevice
+  entities:
+    - CachedCatalog
+    - EdgeCredentialRevocation
+    - EdgeDetectionLapse
+
+# D-642: endpoints reachable WITHOUT a token (SecurityConfig permitAll)
+public_paths:
+  - POST /edge/devices/pair
+  - GET /edge/.well-known/jwks.json
+  - GET /edge/health
+
+application_services:
+  - name: DeviceService
+    path: /devices
+    operations:
+      - enroll
+      - list
+      - get
+      - activate
+      - pair
+      - deactivate
+      - unpair
+      - revoke
+    public_operations:   # D-642: no @PreAuthorize (anonymous / code-authenticated)
+      - pair
+  - name: HeartbeatService
+    path: /heartbeat
+    operations:
+      - record
+  - name: CatalogService
+    path: /catalog
+    operations:
+      - get        # -> edge.catalog.read (D-639: `read` is an action, not an op verb)
+  - name: DeviceTokenService
+    path: /device-tokens
+    operations:
+      - introspect
+  - name: JwksService
+    path: /.well-known
+    operations:
+      - getJwks
+    public_operations:   # D-642: no @PreAuthorize (anonymous / code-authenticated)
+      - getJwks
+
+enums:
+  LifecycleState:
+    - awaiting_claim
+    - paired
+    - deactivated
+    - revoked
+  Connectivity:
+    - online
+    - offline
+  RevocationReason:
+    - revoke
+    - unpair
+    - rotate
+  DetectionState:              # ADR-005 (SAFETY-GEST-1); absent heartbeat → UNKNOWN, never RUNNING (INV-EDGE-9)
+    - RUNNING
+    - PAUSED
+    - DEGRADED
+    - UNAVAILABLE
+    - UNKNOWN
+  LapseCause:                  # ADR-005; chk_edge_lapse_cause in data-model.md §2.5
+    - NOT_RUNNING
+    - HEARTBEAT_STOPPED
+
+feign_clients:
+  - name: PatClient
+    service: pat-service
+    url_prop: neuroassist.pat.base-url
+  - name: AcsClient
+    service: acs-service
+    url_prop: neuroassist.acs.base-url
+  - name: HistClient
+    service: hist-service
+    url_prop: neuroassist.hist.base-url
+  - name: EvntClient              # ADR-005 (SAFETY-GEST-1) — detection-lapse raise/resolve G6; authority string confirmed by INT-EDGE-006
+    service: evnt-service
+    url_prop: neuroassist.evnt.base-url
+
+consumed_events: []
+
+events:
+  published: []
+
+outbound_ports:
+  - EdgeDeviceTokenSignerPort

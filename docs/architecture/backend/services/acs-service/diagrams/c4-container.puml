@@ -1,0 +1,25 @@
+@startuml acs-c4-container
+' C4 Container — ACS (Caregivers and Access), NeuroAssist NIV
+title ACS — Containers
+
+rectangle "acs-service\nSpring Boot (Java 21), hexagonal\nAuthorization Server + Resource Server" as acs #LightBlue
+
+database "PostgreSQL\nneuroassist_global +\nt_<tenantId> schemas" as pg
+rectangle "Eureka (REG)\nservice registry" as eureka
+rectangle "API Gateway (GWY)\nSpring Cloud Gateway" as gwy
+rectangle "HIST (hist-service)\naudit sink" as hist
+rectangle "MIG (migrations)\ncentral Flyway runner" as mig
+
+gwy --> acs : HTTPS /acs/** \n(port 8081)
+acs --> pg : JPA (global + per-tenant)
+acs --> eureka : register / discover
+acs --> hist : Feign/REST POST /audit\n(sync, 2s timeout)
+mig --> pg : applies ACS-authored\nFlyway scripts (all schemas)
+
+note right of acs
+  No message broker (messaging disabled).
+  No TechLab AI hub client.
+  Blacklist + JWKS served from acs-service.
+end note
+
+@enduml

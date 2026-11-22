@@ -1,0 +1,97 @@
+# generator-config.yml — ACS (frontend)
+# Input for the Nx module generator consumed by /fe-architect-scaffold (and /fe-architect-promote).
+# Emitted by /fe-architect-specs neuroassist-niv ACS.
+# Sources: frontend/01-06 + adr/ADR-005 (local) + ADR-006 (shared), frontend-spec/SPEC-01..08,
+#          contracts/backend-api-cross-link.md. Authorities are BE-canonical (INV-7).
+
+module: acs
+issue_prefix: ACS
+npm_scope: "@neuroassist"
+shell_route: /access              # caregiver surfaces; /ops/tenants is host-gated (ADR-011)
+app: neuroassist-niv-web          # shell app that lazy-loads @neuroassist/acs
+entry_lib: libs/acs/shell-entry   # importPath @neuroassist/acs (ADR-006)
+state_management: signals         # no NgRx; signal/computed + .asReadonly() (ADR-001/002)
+
+# ── Features (libs/acs/feature-*) ─────────────────────────────────────────────
+features:
+  - name: caregivers
+    routes: [/access/caregivers, /access/caregivers/new]
+    components: [CaregiverListPageComponent, RegisterCaregiverPageComponent]
+  - name: patient-sessions
+    routes: [/access/patient-sessions, /access/patient-sessions/:patientId]
+    components: [PatientSessionsPageComponent]
+  - name: tenant-admin
+    routes: [/ops/tenants]
+    components: [TenantAdminPageComponent]
+
+# ── Data access (libs/acs/data-access) ────────────────────────────────────────
+# base_path is the gateway prefix /acs (NOT /api/v1). Adapter default = http (acs-service exists).
+data_access:
+  - resource: Caregiver
+    base_path: /acs/caregivers
+    operations: [register, deactivate, me]      # list pending-BE (G3): no GET /acs/caregivers yet
+    idempotent_ops: [deactivate]
+  - resource: PatientLink
+    base_path: /acs/caregivers/{caregiverId}/links
+    operations: [list, link, unlink]
+    idempotent_ops: [unlink]
+  - resource: PatientSession
+    base_path: /acs/patient-sessions
+    operations: [provision, revoke, get]
+    idempotent_ops: [revoke]                     # BE §4.2 idempotent; FE default pessimistic (SEC-001)
+  - resource: Tenant
+    base_path: /acs/ops/tenants
+    operations: [onboard]                        # platform-ops only (INV-5); opsHostGuard-gated
+
+adapter_default: http                            # carry-forward: providers spec must prove http, not mock
+
+# ── Access (libs/acs/access) ──────────────────────────────────────────────────
+guards:
+  - authGuard                      # all ACS routes; session-absent redirects to login
+  - canManageAccessGuard           # caregiver + patient-session surfaces (AccessDecisionService)
+  - opsHostGuard                   # /ops/tenants only — served-from-host allowlist ACS_OPS_HOST
+
+# ── Module contract (acs.contract.ts) — BE authorities (INV-7) ─────────────────
+module_contract:
+  key: acs
+  label: Access
+  icon: group
+  section: admin
+  permissions:
+    - acs.caregiver.create
+    - acs.caregiver.deactivate
+    - acs.patient-link.link
+    - acs.patient-link.unlink
+    - acs.patient-session.provision
+    - acs.patient-session.revoke
+    - acs.tenant.onboard
+  feature_flags:
+    acs.patient-sessions: on       # core MVP (Screen 07)
+    acs.tenant-admin: off          # ops-only; enabled on the admin host (ADR-011)
+    acs.caregiver-list: off        # enable when GET /acs/caregivers lands (G3)
+
+# ── Shared libs consumed (@neuroassist/shared/*) ───────────────────────────────
+shared_libs_used:
+  - "@neuroassist/shared/auth-session"
+  - "@neuroassist/shared/tenant-context"
+  - "@neuroassist/shared/access-decision"
+  - "@neuroassist/shared/access-http-base"
+  - "@neuroassist/shared/contracts"
+  - "@neuroassist/shared/error-model"
+  - "@neuroassist/shared/observability"
+
+ui_libs_used:
+  - "@neuroassist/shared/ui-components"
+  - "@neuroassist/shared/ui-feedback"
+  - "@neuroassist/shared/ui-tokens"
+
+extra_dependencies: []
+
+# ── Backend cross-link ─────────────────────────────────────────────────────────
+backend_contract: ../../../../../backend/services/acs-service/contracts/api-contract.md
+
+# ── E2E ──────────────────────────────────────────────────────────────────────
+e2e:
+  project: acs-e2e
+  framework: playwright
+  features_path: docs/architecture/frontend/modules/acs/frontend/e2e/

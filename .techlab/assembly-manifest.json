@@ -1,0 +1,600 @@
+{
+  "manifest_id": "manifest_40d8304e3c31",
+  "plan_id": "plan_legacy_767d04da",
+  "project_id": "neuroassist-niv",
+  "generated_at": "2026-11-19T04:17:44.781342+00:00",
+  "applied_at": "2026-11-19T04:17:44.781342+00:00",
+  "generator_version": "0.0.0",
+  "artifacts": [
+    {
+      "asset_id": ".claude/commands/be-autopilot.md",
+      "output_path": ".claude/commands/be-autopilot.md",
+      "sha256": "2e293d55e2a260c48bd8fbcebcd5234767c010aa8c91cded191677994fde9dd9",
+      "template_sha": "596021e1430d0023402583e9c16c2f18d38a5335a94a9721a7b2a67d7c59f18c",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/commands/be-implement.md",
+      "output_path": ".claude/commands/be-implement.md",
+      "sha256": "64cb59f7128518c9b81992b659002951982d8e2cdb4c38f22085bb377da29be7",
+      "template_sha": "3c1219ee9c9bae4b4e75ab534035624b2ab8f00ed4b4fe832db88bdbdb2bd290",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/commands/be-planner.md",
+      "output_path": ".claude/commands/be-planner.md",
+      "sha256": "4aff03e7b72f3063fa81dd7bb7d347847b8ab3238c34136993c95b56fb239c4d",
+      "template_sha": "f3db70a781731a436fa6ec28a3542358dffd3add50b9ee8828eb90394b410ac9",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/commands/be-validator.md",
+      "output_path": ".claude/commands/be-validator.md",
+      "sha256": "e25dcff7703a7a0c2c1119f6ed391c3a5bf474e403bfdab0fa54d1fb6d6151ad",
+      "template_sha": "05a44366a09d0937a997556ddaa486e050b75531d48d0693a5bec90baa8f3af6",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/commands/fe-autopilot.md",
+      "output_path": ".claude/commands/fe-autopilot.md",
+      "sha256": "4dec36386d9cf01ee6f5bc893a7174cdf75e8a6360a0a2c800fa6073a91a979e",
+      "template_sha": "a6f85d2ba57bdf9787c501407462465324ae9d5e38465bfd7a0c0a4e977f6d8d",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/commands/fe-implement.md",
+      "output_path": ".claude/commands/fe-implement.md",
+      "sha256": "1024f22fe4993e5e48c0e1ad040088cf06790341fa27b987116c793467ee49ae",
+      "template_sha": "daf86c13d460026d3e885de6d0eda56abe2aa89ba90c523366a9bf3d6c538943",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/commands/fe-planner.md",
+      "output_path": ".claude/commands/fe-planner.md",
+      "sha256": "782a113b15b8c584530f529271a28d1ab44e88203f061a1b169897f6de63b51f",
+      "template_sha": "c08694e69f2edd9530d15d47a5e817a9dc5c86e2e745fb8b461bba5be030e30d",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/commands/fe-validator.md",
+      "output_path": ".claude/commands/fe-validator.md",
+      "sha256": "0c4cc1e324d2600c02f49b84a113f8d8177b4a70b37efb31e2e001c912eef91e",
+      "template_sha": "f3c427a008a25f49be85f99d4e6f5df07214d7409c59d9bd5f74ad99dbb10644",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/agents/fe-implementer-agent.md",
+      "output_path": ".claude/agents/fe-implementer-agent.md",
+      "sha256": "7f65328fea8b790fae066536e8efd562e1194e22abc09fd20d065ccb7d84560d",
+      "template_sha": "c8550ccddbf04ae3f9e8a61b558480443713ef2136bd380943f479b308b55bae",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/agents/fe-planner-agent.md",
+      "output_path": ".claude/agents/fe-planner-agent.md",
+      "sha256": "37b370b1c4a661465ad5a3961c14b66f0a6fbee866e639df445586a074a37de0",
+      "template_sha": "a3161f4d12f34d8921b5ac158240e2323eefc29c7ae0327e34fdffc65b8faec7",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/agents/fe-validator-agent.md",
+      "output_path": ".claude/agents/fe-validator-agent.md",
+      "sha256": "f5f3fc754c2105252d08d7fd806b730df175ff3b0349f74f68487627a1950642",
+      "template_sha": "9d485edf7b48aa98ff3cfd57a4f21c78174993ddd122b98daecf88ef9162113c",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/agents/implementer-agent.md",
+      "output_path": ".claude/agents/implementer-agent.md",
+      "sha256": "5d2b308a9df608edfda18fd772aaf35746fc8b5cca6e2c6777ff88d9949b5f82",
+      "template_sha": "e08ad2cb3c5eaff0aeb13eee380bbbd663935e5de85b705082f4ef3092ed0821",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/agents/planner-agent.md",
+      "output_path": ".claude/agents/planner-agent.md",
+      "sha256": "539127dbf9ddffe3ebb8264aebba5193c5455d36f8e80889a52f457a012b3282",
+      "template_sha": "e61193d2f7bd335a05e62b97f50491cdbfb447ee21ed94d8008ef40118a6f72a",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/agents/validator-agent.md",
+      "output_path": ".claude/agents/validator-agent.md",
+      "sha256": "2f3ae0c4f67112ff740cddc508fe0ad21a55054e8de0298dbc8d18180146c15e",
+      "template_sha": "c293aeb5dc155fb3ba5acd614103ebff92970bff4b7eb8734366806506dd0a65",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/skills/dev-context-load/SKILL.md",
+      "output_path": ".claude/skills/dev-context-load/SKILL.md",
+      "sha256": "eb8e2bf5cd966078374a128e5fad64a355ad4c7b99280f0c828982eb00a2255b",
+      "template_sha": "eb8e2bf5cd966078374a128e5fad64a355ad4c7b99280f0c828982eb00a2255b",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/skills/dev-phase-emit/SKILL.md",
+      "output_path": ".claude/skills/dev-phase-emit/SKILL.md",
+      "sha256": "69f0a4a4a87b1239f1918769a464fbaa9272a8efa946c35568ee0df849106e5d",
+      "template_sha": "69f0a4a4a87b1239f1918769a464fbaa9272a8efa946c35568ee0df849106e5d",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/skills/master-plan-status/SKILL.md",
+      "output_path": ".claude/skills/master-plan-status/SKILL.md",
+      "sha256": "7fa71dbde65db904f1e6a18a0686311c1a168a89b4ae428a6718bfb60447d165",
+      "template_sha": "7fa71dbde65db904f1e6a18a0686311c1a168a89b4ae428a6718bfb60447d165",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": ".claude/skills/pipeline-status/SKILL.md",
+      "output_path": ".claude/skills/pipeline-status/SKILL.md",
+      "sha256": "3e1b957d11893e1ba3747165bf924a8475f6968f153e725269735c5c3ebab573",
+      "template_sha": "3e1b957d11893e1ba3747165bf924a8475f6968f153e725269735c5c3ebab573",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/entity-scope.arch.json",
+      "output_path": "arch/decisions/entity-scope.arch.json",
+      "sha256": "ae74ce35a132fc53a51e69ad69b9add3ce3e44643da5da7db86674cb0643af4e",
+      "template_sha": "c26ece189eae35a9a73e3825f842a16e5aaf7ad0fcf69a99a1defa2d2f881b0e",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/error-model.arch.json",
+      "output_path": "arch/decisions/error-model.arch.json",
+      "sha256": "0b8ce2bf82462529d602cbd419e0da50ad631ed5ee45411f7cb5ea3b83473e6b",
+      "template_sha": "69725623f5c267ed84bd5341a54c52fedb0ebd9351417513bd0021d7dca5fee5",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/events.arch.json",
+      "output_path": "arch/decisions/events.arch.json",
+      "sha256": "f4dd7d8311a60ea8355e41a24932579b666c8107cb5e4387916fe82dea105459",
+      "template_sha": "8c0225b00e811d94678f0a42c3b5344a648a8dcea909f66496d35ada874e5057",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/multi-tenancy.arch.json",
+      "output_path": "arch/decisions/multi-tenancy.arch.json",
+      "sha256": "89a2ae67f042e31c77c7c2c7352b88dcb86a69ac6475e9fd40ab2d42a79ed44f",
+      "template_sha": "89a2ae67f042e31c77c7c2c7352b88dcb86a69ac6475e9fd40ab2d42a79ed44f",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/permission-catalogue.arch.json",
+      "output_path": "arch/decisions/permission-catalogue.arch.json",
+      "sha256": "e357ed65dfc80afc4ca1fe208f8cc1c4ffbb3f5b63ed96aec925fb536737c970",
+      "template_sha": "9063b2db9224616625fe1f3090a355a44fdc921e76e126ac3f9f0a6e34a4ce43",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/persistence.arch.json",
+      "output_path": "arch/decisions/persistence.arch.json",
+      "sha256": "85467b52a2a5eeaeafdb06c8cd6fa4fb12132dd8c756719d808081846021319d",
+      "template_sha": "85467b52a2a5eeaeafdb06c8cd6fa4fb12132dd8c756719d808081846021319d",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/rbac.arch.json",
+      "output_path": "arch/decisions/rbac.arch.json",
+      "sha256": "4dbbb3dbefa2cb67c56beba5550d9c47a64067e0007d489e61e3f55ba76f8232",
+      "template_sha": "161102337980095c90e136e2c332ccaa84ebb93af8fab084fc438a8297ec5bd4",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/_schema/entity-scope.schema.json",
+      "output_path": "arch/decisions/_schema/entity-scope.schema.json",
+      "sha256": "6d65f2eed67c9479c35bd28e185a2571139fce344c74bed93252cd121d8d70c5",
+      "template_sha": "6d65f2eed67c9479c35bd28e185a2571139fce344c74bed93252cd121d8d70c5",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/_schema/error-model.schema.json",
+      "output_path": "arch/decisions/_schema/error-model.schema.json",
+      "sha256": "d1cd5ef2ff88315071eb1cb9ce9612ed3c6a4ced1dbe54f36cede9cd362de5a2",
+      "template_sha": "d1cd5ef2ff88315071eb1cb9ce9612ed3c6a4ced1dbe54f36cede9cd362de5a2",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/_schema/events.schema.json",
+      "output_path": "arch/decisions/_schema/events.schema.json",
+      "sha256": "33b46f0a4ed740d0af8567b3efda0870db55b14b118df6b32faf1ff6c28ee208",
+      "template_sha": "33b46f0a4ed740d0af8567b3efda0870db55b14b118df6b32faf1ff6c28ee208",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/_schema/multi-tenancy.schema.json",
+      "output_path": "arch/decisions/_schema/multi-tenancy.schema.json",
+      "sha256": "7ec7a6190c99c22ded1f2cba71cebf38d9634ded1e06f436b61bd8afb3787c17",
+      "template_sha": "7ec7a6190c99c22ded1f2cba71cebf38d9634ded1e06f436b61bd8afb3787c17",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/_schema/permission-catalogue.schema.json",
+      "output_path": "arch/decisions/_schema/permission-catalogue.schema.json",
+      "sha256": "3cb1f368cc5321d9805fcb074e9f800b81996c567e2f45982ebc2d3e106bed00",
+      "template_sha": "3cb1f368cc5321d9805fcb074e9f800b81996c567e2f45982ebc2d3e106bed00",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/_schema/persistence.schema.json",
+      "output_path": "arch/decisions/_schema/persistence.schema.json",
+      "sha256": "cf5e3662362b24a58d350115008124b5a6aad87bde120a5778213da7cfad88a3",
+      "template_sha": "cf5e3662362b24a58d350115008124b5a6aad87bde120a5778213da7cfad88a3",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "arch/decisions/_schema/rbac.schema.json",
+      "output_path": "arch/decisions/_schema/rbac.schema.json",
+      "sha256": "8d115b525e062b4c6b6ea5aab180cbe17572999746ed27d7548d76630b21aeaa",
+      "template_sha": "8d115b525e062b4c6b6ea5aab180cbe17572999746ed27d7548d76630b21aeaa",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/README.md",
+      "output_path": "docs/architecture/backend/README.md",
+      "sha256": "e3f348f0f4cb3d0d574d7ba84bb5719795350a81750461840878af897ee8fb8f",
+      "template_sha": "75e6338e121362fe3f14a11b81c3110997f153e8517aa69c4b6f5a0bb5a8126a",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/hexagonal-patterns.md",
+      "output_path": "docs/architecture/backend/standards/hexagonal-patterns.md",
+      "sha256": "ebcace1478914ae19c00c14c67d229e646bd519a5d1993b60e716d3e1bb6e56b",
+      "template_sha": "f65e04b9482563630a7ef8e1ff54e9394a06718c54f5be7c50fb2fd3680c7dd0",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/java-conventions.md",
+      "output_path": "docs/architecture/backend/standards/java-conventions.md",
+      "sha256": "06683bbe53be5a1f352820e5a6cfdca7b702a4494479bdeb78ed8d65d91034d8",
+      "template_sha": "b96c638c4148c98e2175c1e119596a05380a9f4425d7788b172754b80ace3df2",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/snippets.md",
+      "output_path": "docs/architecture/backend/standards/snippets.md",
+      "sha256": "6fa1679625d25b02704bb77468a0e53a6661b8678a06e8d180735667317d6d00",
+      "template_sha": "050f67dacdbe3bf4b2dbb494f313c991b35d33beaf2bfd64f71e4d7407ff44fa",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/platform-patterns.md",
+      "output_path": "docs/architecture/backend/standards/platform-patterns.md",
+      "sha256": "83dd3edf0db1060e3e51876b9da36bfcc5da5c12ad19bb08ebaceb18d4b6a9c7",
+      "template_sha": "2e5afb0b1ca7fa96d0c9bea5dd335be4c72c0e886d5579b7e80dd7a216fc9532",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/testing-conventions.md",
+      "output_path": "docs/architecture/backend/standards/testing-conventions.md",
+      "sha256": "9a70eb035f55bbef0cdc370a33a8b920f0aaa5aad46985324f4c42e6f7f09435",
+      "template_sha": "0da4b5e1473a9969a0688f277311d1348203a9734192eebbb594791ef9f9a73a",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/services-catalog.md",
+      "output_path": "docs/architecture/backend/standards/services-catalog.md",
+      "sha256": "16ec210585b103da0626f3c9ee78e6b3883a078be6d35ad3ec70cd70e8c7a566",
+      "template_sha": "a77726dba26bc1ecc25c98c48da24e4bab7f51d4f4c087f3c6e9d5c3ac7ccb79",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/service-spec-authoring.md",
+      "output_path": "docs/architecture/backend/standards/service-spec-authoring.md",
+      "sha256": "105874839f7c0043d306481eaf6bf945c0b08b358ae2d7d8b4133ff07c03544a",
+      "template_sha": "d18a8ca3bbf4ee97b6328e4361b031b0f82cb3e76ac9c63aa164640a35d89ca3",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/api-mock-convention.md",
+      "output_path": "docs/architecture/backend/standards/api-mock-convention.md",
+      "sha256": "3d8c7ef9ccbf9dc7528b23399cdfa4d704d7b68ecc992a84f2c2e21d52319e8c",
+      "template_sha": "4237f0ec2a661517ff0fa42ce7c7ac91766a68f26498d92c2507801634a1b3e4",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/standards/ears-notation.md",
+      "output_path": "docs/architecture/backend/standards/ears-notation.md",
+      "sha256": "0e1170c62833b3dde51e00a3bc413c9c88f13b1649f9622bb3f978c9f827ff45",
+      "template_sha": "421b0556d24aab8bc16d24244cf0059ce7a203b5b0cdd29b26abc0956fee486e",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/adr/README.md",
+      "output_path": "docs/architecture/backend/adr/README.md",
+      "sha256": "fd189374e595c85261ffb1478c437eb190926a75108cf8d7fed106ae61220f82",
+      "template_sha": "1b74d2f080d9080018cc3fdae157118f0e28fc4d3be1d1fd7ecbea990217c53f",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/plans/README.md",
+      "output_path": "docs/architecture/backend/plans/README.md",
+      "sha256": "99a5c8eba224e4be8a4d87491649ce829ae3474cbe829fa68906af666f2df051",
+      "template_sha": "d47888207192d6e10e5b11ae91d211be7f5fd4e8cbad370ebf0883bbd74a0d37",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/issues/README.md",
+      "output_path": "docs/architecture/backend/issues/README.md",
+      "sha256": "fd4a5d838c3ca71b8eeeeb5601bdaab33a49d1c69ed96ba1efb222bbeea5a8c9",
+      "template_sha": "c34dcb4adc349b74ed565ea54fc93cb7480e67fedea23d4ef2f7e216a88962fc",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/services/README.md",
+      "output_path": "docs/architecture/backend/services/README.md",
+      "sha256": "f1f91b06eaaf899d41f49e2b919993a49c28a0a60320ac56d7553159c67b9f34",
+      "template_sha": "81bee7635eb4392c02fe890f2c640fb136a9b815bc9e08a70967757d0ee58d63",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/README.md",
+      "output_path": "docs/architecture/shared/README.md",
+      "sha256": "e0faf2e48c7502552b45a450d7ac8c3a9c1802235e41831143ca6df3c198396d",
+      "template_sha": "e8f7612a889e67895d78d8b09372199d33429e07ffdec9dd2d1b89efb857d99a",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/blueprint-core.md",
+      "output_path": "docs/architecture/shared/blueprint-core.md",
+      "sha256": "e0c93202292c8e58dfc103cae4b1613322df06b9710a77444dc462f99de100c1",
+      "template_sha": "189da352dbc0864f989ecf9b57d09a68685d53c4905ee399fc9a1b4357a497e9",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/distributed-architecture.md",
+      "output_path": "docs/architecture/shared/distributed-architecture.md",
+      "sha256": "fbb403dba170d8cad00482b81ad6588735b4538a142e8c5c997a9976adaa7d1c",
+      "template_sha": "78246e09b4239be6fa88aedb871fe2f08d191a4e4ac7570a3fd417ae821e096c",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/multi-empresa.md",
+      "output_path": "docs/architecture/shared/multi-empresa.md",
+      "sha256": "51d9697d20bfe63a147200d3e190a9bffac814ed0f73548b8e70bdfe01af5a19",
+      "template_sha": "67fffd4199f233385a0a9f842a581732bfb16512f02ab17d75924b2d21790250",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/contratos/README.md",
+      "output_path": "docs/architecture/shared/contratos/README.md",
+      "sha256": "c111e64a7de250c8139967c5b2e005faa1bb389433a535ea258c898f67f81f24",
+      "template_sha": "9db5b584d1b1a0e50a14c3144f3056ed634e7fc23a65dd016c412b0742eedf49",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/contratos/error-model.md",
+      "output_path": "docs/architecture/shared/contratos/error-model.md",
+      "sha256": "923e26b831b76827c5e249a8bc4128a1fe00bc79275ba7feb816f51f7d97de4f",
+      "template_sha": "bf9126384f58a4eb8c5c47ab0577d8c0b4f01b739bf49e523fa18ab3ae2059d7",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/contratos/event-catalog.md",
+      "output_path": "docs/architecture/shared/contratos/event-catalog.md",
+      "sha256": "23d0a5cd0bef88fd1374a02f7697fdac1eeee70a138974c996619eaf5bd7a816",
+      "template_sha": "67bd710e79ae2be9d154d7b6abe21fa04501e7e5fc290faf4c0538b03e8551a9",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/contratos/openapi/README.md",
+      "output_path": "docs/architecture/shared/contratos/openapi/README.md",
+      "sha256": "c62e966db0437146a222b497bcc01ab3a6513b27cde132fd3ca0b633c585cb51",
+      "template_sha": "de2206ccccc3450f098dd683ade2bb2d64ed4c449ff71b365d4d081cdca0ee81",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/etl-legado/README.md",
+      "output_path": "docs/architecture/shared/etl-legado/README.md",
+      "sha256": "02f10040a8d4044818d65f2da8d2064cb7a94297c26dbc18314b9951b01b1109",
+      "template_sha": "c0c9027bb173464fd9f1b0453212442615dd29b5a303ac38d550036201616b46",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/etl-legado/status-por-entidade.md",
+      "output_path": "docs/architecture/shared/etl-legado/status-por-entidade.md",
+      "sha256": "c15f97a4cf4d5a6b16f43c6658cd52c63342e0571478651b92cefb9579587181",
+      "template_sha": "85b247183e66ede983f5778af073e0ffaf44f70febf361915189fc1f242ca3b4",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/modelo-dados/README.md",
+      "output_path": "docs/architecture/shared/modelo-dados/README.md",
+      "sha256": "781fd279dd0321d8f070f766121f58ec486fa834ec51eca7bddb67234c9eab5e",
+      "template_sha": "9606e64002764f1c6cfac2a28f9fad4b8536092b37e86a53744326ba5f946179",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/modelo-dados/persistence-conventions.md",
+      "output_path": "docs/architecture/shared/modelo-dados/persistence-conventions.md",
+      "sha256": "15afb89328e17202a1d71b2ae6e6d81fc392c3551f99cd70be40797ad7e635a3",
+      "template_sha": "121f9ff0ae4435de456c847b58e1c2b39ab3b4e8c11798e86c92ce39ee565e7f",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/modelo-dados/empresa.md",
+      "output_path": "docs/architecture/shared/modelo-dados/empresa.md",
+      "sha256": "5909361ef15b87693784b9b213286ce9eb4e3fc23c6e0d0896e5cbc2e9dc2c62",
+      "template_sha": "e80f2861ba03543699c6a1c4ba91d75d632851b3a279ce339c2ec8371fbaec7b",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/modelo-dados/global-schema.md",
+      "output_path": "docs/architecture/shared/modelo-dados/global-schema.md",
+      "sha256": "d3b4ad1c71e70a80c81daa79131ac39d03030892feec0a71f12e09fe1f55d716",
+      "template_sha": "afd06985cee9a6a78baad6253340b919a80dc630ae5df583540e04651c8ab429",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/modelo-dados/relacionamentos.md",
+      "output_path": "docs/architecture/shared/modelo-dados/relacionamentos.md",
+      "sha256": "b9a994079a4543b53bdc29278174136e99647e25329a2ba33e9871a421ff1041",
+      "template_sha": "d679613ae46c642419a54ab6b887ddade832898c615bb6fc68766d50f3d64341",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/README.md",
+      "output_path": "docs/architecture/shared/rbac/README.md",
+      "sha256": "878da25f6b995c3d561fb75f307f6938b1035f026e7b1cfdb6ddf3b827753651",
+      "template_sha": "ceceb4e2c7c2ae1ddc3d8c6e6ee439f33eb17d3dd521a3da1fdd273aeaadf77e",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/modelo.md",
+      "output_path": "docs/architecture/shared/rbac/modelo.md",
+      "sha256": "e15ee91b8ae4c479cf344ea39885263448500b79d05a26cecfcbb1a645a43382",
+      "template_sha": "7f19e08f97d4412637658eb71a6cc60b14025833f87b8c1ece155c2f8f8e68dc",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/papeis.md",
+      "output_path": "docs/architecture/shared/rbac/papeis.md",
+      "sha256": "0b7313ba1c185c4808d90f29d471d6edd97149a10e2f409b44405ff0c1d5d038",
+      "template_sha": "782dda673623915ca00001dee26380df9c5649a4605b295559c2bd7e86fb67ee",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/permissoes.md",
+      "output_path": "docs/architecture/shared/rbac/permissoes.md",
+      "sha256": "c0da35de0acbd5d2474f91dcf7c9e567b7dc1a99ba4fa216b49ea208ceec9cdd",
+      "template_sha": "414c443f363eb7908955d5e05ab254832367d0c3a185b1abea9ae53a93f8fa34",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/data-scope.md",
+      "output_path": "docs/architecture/shared/rbac/data-scope.md",
+      "sha256": "2ea579147496b27c5ea81cf4d8208a9b848a552333f7211911cd1be9368af013",
+      "template_sha": "e06e1b78ded2ab3caf2707456df2a275b419402579b899641d355c13e303d23a",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/enforcement.md",
+      "output_path": "docs/architecture/shared/rbac/enforcement.md",
+      "sha256": "84a8c8bbba047c03c6f1a88b1b5d8fbbea324d81d35347010b6c9b0746d75a4c",
+      "template_sha": "add63899b61d35a6b293190f82ce515ac77d33217be20e345b57c9ab67ffc678",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/approval-workflow.md",
+      "output_path": "docs/architecture/shared/rbac/approval-workflow.md",
+      "sha256": "e3b2d3a13280008e77f6d530010a0556d3edcc11548df959d57c8afe95b9b312",
+      "template_sha": "624f5ae54dc4313569614e607f1cca74fb3565e0b9a1b35c5ddea40935e2d47f",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/shared/rbac/session-policy.md",
+      "output_path": "docs/architecture/shared/rbac/session-policy.md",
+      "sha256": "a10d6e960a4f2f9565dc942611001fc865f1d22b1f1ef760c11b6270879bfae1",
+      "template_sha": "8a48ef0c3ee647e63a2e33023268b6b94371bc49fd4e452266f31760dc852bcb",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/backend/adr/ADR-001-hexagonal-architecture.md",
+      "output_path": "docs/architecture/backend/adr/ADR-001-hexagonal-architecture.md",
+      "sha256": "d005d110cc54912a7b2ba1a43f13433cb1a5912e51cb321662710bb7df632568",
+      "template_sha": "30c05c48f25a01dedd2ece370b72db9790a75bdf401a00532b913b544b9f0182",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/README.md",
+      "output_path": "docs/architecture/frontend/README.md",
+      "sha256": "cd52585f0f5ac620bf53b28dd2742b8b90c028f89cfd4c5f0c7a1ae9c0fdcf8f",
+      "template_sha": "348a7fd6a4d0c40b3454f44ac67260790890b8c422390ea45f94e51118cdff04",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/nx-boundaries.md",
+      "output_path": "docs/architecture/frontend/standards/nx-boundaries.md",
+      "sha256": "52590b6be3882850ba57d4e310a9fca930ef24aa5b79df2a56de2359c9c7904d",
+      "template_sha": "610108cde9b5aaa7523b289d2038499346cf91b3ff50464493f4dbab8f4ee5f7",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/access-layer-contracts.md",
+      "output_path": "docs/architecture/frontend/standards/access-layer-contracts.md",
+      "sha256": "f2f767d1704dcbdb8b0874ecb8baa60a0f45d5148f7138dd5725e69d708d9f0b",
+      "template_sha": "7ca9eb03ee140d44999b043bc9142b4a56f0dd732c14591028a61dbdbd154a4c",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/asset-driven-ui.md",
+      "output_path": "docs/architecture/frontend/standards/asset-driven-ui.md",
+      "sha256": "7e91db38acd50bbe1a8745fd81ab180b4985d1ba7eb298e1023f1155a25b16b6",
+      "template_sha": "76042f188cbc9a857ec2573db5525a5759887c8e8575de3252ef38be38cb65e4",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/bootstrap-flow.md",
+      "output_path": "docs/architecture/frontend/standards/bootstrap-flow.md",
+      "sha256": "2185a96229f392e762067e4174caea7eb7bdfe271909dde88927bd14d95472e9",
+      "template_sha": "d8b67fde2111cb04696cfc5e65712f721858fffc0fb44d5408b93f59fca4f664",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/feature-architect-workflow.md",
+      "output_path": "docs/architecture/frontend/standards/feature-architect-workflow.md",
+      "sha256": "ecf3710e920a14079d660ca3bb68ac0075032bb5f55ec82b78a33b571670abb7",
+      "template_sha": "aab4569e1f6d86f83b9a5e8330283aa94b18d5b2aa9bacfb5d05fb990992ddef",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/design-system-tokens.md",
+      "output_path": "docs/architecture/frontend/standards/design-system-tokens.md",
+      "sha256": "2ff8e2a0f6da2e0efc5be503706b3e32908268674ef50c8ab49d56f45a393172",
+      "template_sha": "e45dcdb915d5eb4b18e703e868ad5d171b8708998f0bd4361fde2197484c1fa2",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/data-model-driven-ui.md",
+      "output_path": "docs/architecture/frontend/standards/data-model-driven-ui.md",
+      "sha256": "aadcf392336f8b410fad8b97e2ce3dbc7708264aee05f8c633b1f06766ae1482",
+      "template_sha": "160404736fb08bcec7376a66a855484134eb474ac1636897c55cc21608c72224",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/module-pattern.md",
+      "output_path": "docs/architecture/frontend/standards/module-pattern.md",
+      "sha256": "42768032ecd8cd31c2a831f02dbd3d369f1d689f068097ee762b6ba071c57032",
+      "template_sha": "85ad73abd2e82937a4fbe580935f572634f8bf29997244559a016cab1f67d98e",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/standards/ears-notation.md",
+      "output_path": "docs/architecture/frontend/standards/ears-notation.md",
+      "sha256": "4401883246562ce958cb88ce60b32b96d3c41434dc2b718b2eec2f11dcace9e3",
+      "template_sha": "95b63c503e002f14935f5e62312dc6d443866e0cea0fd742ce5ea25dd11dba08",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/adr/README.md",
+      "output_path": "docs/architecture/frontend/adr/README.md",
+      "sha256": "b2b2f49e61fa68672d25e1f25fe78dd4be2e41c6b825645ca9d9e6f1d9c6b2ac",
+      "template_sha": "5abc59b5687842c47ff4a1c43d128e2713aa81f9edb4ccaef2d2e75d1669e1ea",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/frontend/adr/ADR-006-module-entry-as-library.md",
+      "output_path": "docs/architecture/frontend/adr/ADR-006-module-entry-as-library.md",
+      "sha256": "b747e193557c855b1285f3e253a04061ae35917ab4de7bbaeb075cb73994ffeb",
+      "template_sha": "b219f7a16341314c66b00de547b5b19fe33a4dd76a3386f0b5fea41cda465884",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "docs/architecture/constitution.md",
+      "output_path": "docs/architecture/constitution.md",
+      "sha256": "354f4b374b19840262103063040e8194cef672924a348e9a8d45009c64468d84",
+      "template_sha": "0df7ec58180082a29247a6074c63dbe87b63a7c2bffd6752f9a4238c67934dff",
+      "render_engine": "jinja2"
+    },
+    {
+      "asset_id": "architecture.lock",
+      "output_path": "architecture.lock",
+      "sha256": "14a3312aed8dda56e70c8d85a2d504f02ca362baca40361ee5af75d136704958",
+      "render_engine": "copy"
+    }
+  ],
+  "status": "applied",
+  "lock_sha": "sha256:14a3312aed8dda56e70c8d85a2d504f02ca362baca40361ee5af75d136704958",
+  "warnings": []
+}

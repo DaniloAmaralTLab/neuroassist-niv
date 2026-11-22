@@ -1,0 +1,40 @@
+@startuml conv-c4-container
+' C4 Container — CONV (conv-service)
+title CONV — Containers
+
+skinparam componentStyle rectangle
+
+rectangle "Patient station (FE)\nIndexedDB tree + Cache Storage audio\n+ Service Worker (offline-first)" as Station
+rectangle "GWY\n(API Gateway)" as GWY
+
+package "conv-service (Spring Boot, Java 21, port 8085)" {
+  rectangle "REST API\n/conv/** controllers" as API
+  rectangle "Application\nuse-case services (@Transactional,\nTenantContextHolder.require())" as APP
+  rectangle "Domain\nPublishedTree / TreeVersion / Phrase /\nAudioAsset / UsageSignal (pure POJO)" as DOM
+  rectangle "Infrastructure\nJPA adapters, Feign (PAT/HIST),\nAudioAssetPort (blob), SearchPort (pg),\nsecurity (JWKS, TenantContextFilter)" as INFRA
+}
+
+database "PostgreSQL\n(schema-per-tenant: conv)" as PG
+database "Blob storage\n(audio bytes)" as BLOB
+rectangle "ACS (JWKS)" as ACS
+rectangle "PAT" as PAT
+rectangle "HIST" as HIST
+rectangle "TRN (publish push)" as TRN
+
+Station --> GWY : patient-session token
+TRN --> GWY : service-client token
+GWY --> API
+API --> APP
+APP --> DOM
+APP --> INFRA
+INFRA --> PG
+INFRA --> BLOB : AudioAssetPort
+INFRA --> ACS : validate JWKS
+INFRA --> PAT : pat.patient.read (Feign)
+INFRA --> HIST : hist.audit.record (Feign)
+
+note right of INFRA
+  Messaging disabled: no broker.
+  No TtsPort (synthesis is TRN only, ADR-005).
+end note
+@enduml

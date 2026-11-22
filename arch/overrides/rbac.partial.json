@@ -1,0 +1,16 @@
+{
+  "roles": [
+    {
+      "code": "FAMILY_CAREGIVER",
+      "name": "Family Caregiver",
+      "description": "To be notified reliably and in real time when the patient makes the configured gesture, without needing specialized hardware.",
+      "category": "default",
+      "active": true,
+      "data_scope_tipo": null,
+      "permission_bundle": {
+        "kind": "all",
+        "note": "TODO: refine permissions — defaulted to `all` because per-role authority is not declared in discovery. Edit before going to production."
+      }
+    }
+  ]
+}

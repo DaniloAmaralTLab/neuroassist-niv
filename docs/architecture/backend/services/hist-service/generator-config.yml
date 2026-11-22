@@ -1,0 +1,40 @@
+issue_prefix: HIST
+base_path: /hist
+service: hist-service
+type: standard
+port: 8083
+
+domain:
+  aggregates:
+    - AuditRecord
+  entities:
+    - AuditSource
+
+application_services:
+  - name: AuditService
+    path: /audit
+    resource: audit          # D-641 -> hist.audit.record (POST) + hist.audit.read (GET)
+    operations:
+      - record               # POST /hist/audit  -> hist.audit.record (producers, service-client)
+      - query                # GET  /hist/audit  -> hist.audit.read   (compliance operator)
+
+  - name: PatientHistoryService
+    path: /patients/{patientId}/history
+    resource: history        # D-641 -> hist.history.read
+    operations:
+      - list                 # GET /hist/patients/{patientId}/history (caregiver timeline)
+
+  - name: SubjectErasureService
+    path: /subjects/{subjectId}/erasure
+    resource: erasure        # D-641 -> hist.erasure.create
+    operations:
+      - requestErasure        # POST /hist/subjects/{subjectId}/erasure (ACS / compliance operator)
+
+feign_clients: []
+
+consumed_events: []
+
+events:
+  published: []
+
+outbound_ports: []
