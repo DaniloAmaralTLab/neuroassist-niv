@@ -1,0 +1,3 @@
+service: neuroassist-niv-service-registry
+type: registry
+port: 8761

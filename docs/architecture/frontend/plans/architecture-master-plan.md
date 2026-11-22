@@ -16,7 +16,7 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 | GEST | gest | OK | OK | OK | OK | OK | 2026-11-20 |
 | HIST | hist | OK | OK | OK | OK | OK | 2026-11-20 |
 | DASH | dash | OK | OK | OK | OK | OK | 2026-11-20 |
-| CONV | conv | OK | pendente | pendente | pendente | pendente | 2026-11-20 |
+| CONV | conv-service | OK | OK | OK | OK | OK | 2026-11-22 |
 
 ## Ledger de gates diferidos
 
@@ -65,3 +65,4 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 - 2026-11-20T12:30:40 -- GEST -- M6 Promote -- OK -- Track D -- layer-only (no prototype screen; net_new station runtime) -- 3 Ports+3 MockAdapters+3 HttpAdapters+3 Facades (Runtime/Catalog/Report) HTTP default -- StationLivenessPort+NoOpImpl -- stationIdentityGuard -- GEST_MODULE_DESCRIPTOR (MODULE_PERMISSION_MAP empty) -- /station route added to shell -- gest-e2e 5 features
 - 2026-11-20T15:54:30 -- HIST -- 2026-11-20 FE Promote OK — Track D (full layer from scratch). Port+Mock+Http adapters, HistoryFacade (signals/no-poll), contract, providers (default http), canReadHistoryGuard. HistoryPageComponent (promoted from prototype), HistoryWidgetComponent (DASH-ready), HistShellIntegrationService. Shell: /history route + provideHist() + HIST_DESCRIPTOR. hist-e2e: 3 features 39 scenarios. Base: dollar-sign{ACCESS_HTTP_BASE}/hist. Feedback delegated to EVNT via (markFeedback) output. Safety surfaces: informational-only.
 - 2026-11-20T16:57:21 -- DASH -- DASH -- M6 Promote -- OK -- Track D (composition layer, NO backend/Port/HttpClient). DashboardFacade composes HistShellIntegrationService, AlarmFacade, DeviceFacade, PatientFacade, CommandFacade. DetectionLapseAdapter seam (unknown, INT-FE-DASH-001 pending). Fail-safe composite: all_clear only when every source ok+fresh (fixes events.every() true-on-empty bug). screens/home promoted to libs/dash/feature-home/. screens/entry promoted to shell app/screens/. Shell: /home DASH_ROUTES + /entry static + redirectTo home + provideDash(). module-descriptors DASH_DESCRIPTOR added. dash-e2e 6 features 32 scenarios. All gates DIFERIDO (node_modules absent).
+- 2026-11-22T10:29:24 -- CONV -- Promote -- OK (gates diferidos: node_modules ausente) -- libs/conv 42 files, provideConv default http, guard stub-permissive until shared/access-decision (PLATFORM routeGuards), mounted /patient placeholder (G1)

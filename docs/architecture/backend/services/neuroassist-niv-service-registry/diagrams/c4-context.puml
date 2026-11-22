@@ -1,0 +1,19 @@
+@startuml c4-context-reg
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title REG (neuroassist-niv-service-registry) - Context
+
+Person(operator, "Platform / Ops Operator", "Inspects fleet health via the Eureka dashboard")
+
+System(reg, "neuroassist-niv-service-registry (REG)", "Eureka server: every service registers and resolves peers here. Discovers, never routes. No PHI.")
+
+System_Ext(services, "NeuroAssist NIV services", "acs / pat / edge / evnt / conv / gest / hist / trn")
+System_Ext(gwy, "neuroassist-niv-api-gateway (GWY)", "Most discovery-dependent client; resolves lb:// targets")
+System_Ext(obs, "Elasticsearch", "Lifecycle / access logs")
+
+Rel(services, reg, "Register + heartbeat + resolve peers", "Eureka protocol / HTTP")
+Rel(gwy, reg, "Register + resolve lb:// targets", "Eureka protocol / HTTP")
+Rel(operator, reg, "Inspects registered apps/instances", "Dashboard / HTTPS")
+Rel(reg, obs, "Lifecycle + access logs", "best-effort")
+
+@enduml

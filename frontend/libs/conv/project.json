@@ -1,0 +1,23 @@
+{
+  "name": "conv",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/conv/src",
+  "projectType": "library",
+  "tags": ["scope:conv", "type:feature"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/conv/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/conv"],
+      "options": {
+        "jestConfig": "libs/conv/jest.config.ts"
+      }
+    }
+  }
+}

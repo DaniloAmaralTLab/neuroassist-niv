@@ -5,20 +5,32 @@
 **Done/Total:** 0/6 itens
 
 ## Contexto
-TODO[agent]: contexto e objetivo da issue.
+
+Creates `PublishedTreeJpaRepository` and `TreeVersionJpaRepository` (Spring Data JPA) plus
+their corresponding `PublishedTreeRepositoryAdapter` (implements `PublishedTreeRepositoryPort`)
+and `UsageRepositoryAdapter` (implements `UsagePort`). Every adapter method starts with
+`TenantContextHolder.require()` as the first line (ArchUnit RULE-04, SPEC-06) to ensure no
+query ever runs without a resolved tenant. `PublishedTreeRepositoryPort.findActiveWithLock(patientId)`
+must use a `SELECT FOR UPDATE` / `@Lock(LockModeType.PESSIMISTIC_WRITE)` to serialize
+concurrent publishes (SPEC-05, INV-CONV-2). The partial unique index `uq_tree_version_one_active`
+acts as the last-resort guard but the application lock is the primary serialization mechanism.
 
 ## Escopo
 - [ ] implementar `backend/services/conv-service/src/main/java/com/neuroassist/conv/infrastructure/persistence/jpa/PublishedTreeJpaRepository.java`
 - [ ] implementar `backend/services/conv-service/src/main/java/com/neuroassist/conv/infrastructure/persistence/jpa/TreeVersionJpaRepository.java`
 - [ ] implementar `backend/services/conv-service/src/main/java/com/neuroassist/conv/infrastructure/persistence/adapter/PublishedTreeRepositoryAdapter.java`
 - [ ] implementar `backend/services/conv-service/src/main/java/com/neuroassist/conv/infrastructure/persistence/adapter/UsageRepositoryAdapter.java`
-- [ ] TODO[agent]: itens adicionais de escopo
+- [ ] criar `CategoryJpaRepository`, `PhraseJpaRepository`, `AudioAssetJpaRepository` para leitura durante serialização do bundle
+- [ ] garantir que nenhuma chamada de repositório ocorre sem `TenantContextHolder.require()` (ArchUnit RULE-04)
 
 ## Criterios de aceite
-- [ ] TODO[agent]: criterio de aceite verificavel
+- [ ] AC-1 `PublishedTreeRepositoryAdapter.findByPatientId(patientId)` calls `TenantContextHolder.require()` before any query; an IT fails with `TenantNotResolvedException` if the tenant is not set
+- [ ] AC-2 `findActiveWithLock(patientId)` acquires `PESSIMISTIC_WRITE` lock (verified in an IT by checking `FOR UPDATE` in Hibernate SQL logs)
+- [ ] AC-3 `./gradlew :conv-service:test` exits 0 (unit tests with mocked JPA repos)
 
 ## Dependencias
-TODO[agent]: issues/endpoints dependentes ou "Nenhuma".
+- CONV-010 (precede — JPA entities)
+- CONV-005 (precede — port interfaces)
 
 ## Estimativa
 S

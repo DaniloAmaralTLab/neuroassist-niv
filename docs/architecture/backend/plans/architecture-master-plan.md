@@ -16,8 +16,8 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 | GEST | gest-service | OK | OK | OK | OK | OK | 2026-11-20 |
 | HIST | hist-service | OK | OK | OK | OK | OK | 2026-11-20 |
 | DASH | dash-service | OK | N/A | N/A | N/A | N/A | 2026-11-20 |
-| CONV | conv-service | OK | OK | OK | pendente | pendente | 2026-11-22 |
-| REG | neuroassist-niv-service-registry | em andamento | pendente | pendente | pendente | pendente | 2026-11-22 |
+| CONV | conv-service | OK | OK | OK | OK | OK | 2026-11-22 |
+| REG | neuroassist-niv-service-registry | OK | OK | N/A | em andamento | pendente | 2026-11-22 |
 
 ## Ledger de gates diferidos
 
@@ -50,3 +50,4 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 - 2026-11-19T22:12:45 -- PAT -- M1 Vision -- OK -- BE 12 artifacts (01..06, _brief, 4 local ADRs)
 - 2026-11-22T09:37:44 -- CONV -- Specs -- OK -- 27 files; 6 conv.* authorities; Flyway V0070-V0079; HIST facts classified
 - 2026-11-22T09:45:51 -- CONV -- Specs-Validate -- OK (gate diferido) -- 96 EARS, 29 scenarios; scaffold-format glue, quoted-Examples defect fixed; BDD gate deferred until scaffold
+- 2026-11-22T10:19:42 -- CONV -- Scaffold -- OK -- arch 15/15, integration 39/39 (CucumberIT 34/34, MethodSecurityEnforcementIT 4/4); fixes: dual port adapter, EmbeddedKafka, doubled {string} quoting, shadowed literals

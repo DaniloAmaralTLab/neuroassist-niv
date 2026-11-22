@@ -64,6 +64,14 @@ export const appRoutes: Routes = [
         path: 'history',
         loadChildren: () => import('@neuroassist/hist').then(r => r.HIST_ROUTES),
       },
+      // CONV — /patient/converse: Speech Tree navigator (Patient-Mode station runtime).
+      // G1 host undecided: mounted here as /patient in the main caregiver shell as a placeholder;
+      // the definitive host (once chosen) will own this branch (SPEC-01 §5, generator-config.yml).
+      // Promoted by /fe-architect-promote neuroassist-niv CONV.
+      {
+        path: 'patient',
+        loadChildren: () => import('@neuroassist/conv').then(r => r.CONV_ROUTES),
+      },
       // Additional modules added progressively via /fe-architect-promote.
     ],
   },

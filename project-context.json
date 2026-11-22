@@ -350,7 +350,7 @@
         "displayName": "Conversation via Speech Tree",
         "description": "Speech tree navigable by category → phrase, with an input-channel-agnostic design (gesture via GEST or direct touch/mouse). The runtime uses pure retrieval (Elasticsearch/kNN) for assisted semantic search; voice output via pre-synthesized, cached TTS audio (ElevenLabs, the patient's voice); English-only content.",
         "backendService": "conv-service",
-        "frontendLib": "conv-ui",
+        "frontendLib": "conv",
         "hasUi": true,
         "isInfrastructure": false,
         "status": "planned"

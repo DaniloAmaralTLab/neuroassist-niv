@@ -17,13 +17,17 @@ method MUST reference the `RoleAuthorityPolicy` constant, never a literal string
 ## Escopo
 - [ ] implementar `backend/services/conv-service/src/main/java/com/neuroassist/conv/infrastructure/security/RoleAuthorityPolicy.java`
 - [ ] implementar `backend/services/conv-service/src/main/java/com/neuroassist/conv/infrastructure/security/SecurityConfig.java`
-- [ ] TODO[agent]: itens adicionais de escopo
+- [ ] definir constantes públicas no enum/classe `RoleAuthorityPolicy` para os 6 `conv.*` authorities
+- [ ] anotar `SecurityConfig` com `@EnableMethodSecurity(prePostEnabled = true)`
+- [ ] registrar `JwtGrantedAuthoritiesConverter` que lê `authorities` do JWT (não `scope`)
 
 ## Criterios de aceite
-- [ ] TODO[agent]: criterio de aceite verificavel
+- [ ] AC-1 `RoleAuthorityPolicy` expõe exatamente 6 constantes: `CONV_TREE_READ`, `CONV_AUDIO_READ`, `CONV_USAGE_RECORD`, `CONV_TREE_PUBLISH`, `CONV_TREE_VERSION_RETIRE`, `CONV_AUDIO_DELETE`, cujos valores são as strings `conv.*` correspondentes
+- [ ] AC-2 `SecurityConfig` is annotated `@EnableMethodSecurity(prePostEnabled = true)`; calling a `@PreAuthorize`-protected method without the authority returns `403` in an IT
+- [ ] AC-3 `./gradlew :conv-service:test` exits 0 (unit test verifies constant values)
 
 ## Dependencias
-TODO[agent]: issues/endpoints dependentes ou "Nenhuma".
+- CONV-001 (precede)
 
 ## Estimativa
 S

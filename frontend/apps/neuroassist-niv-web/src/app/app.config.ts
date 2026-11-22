@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { appRoutes } from './app.routes';
 import { provideAcs } from '@neuroassist/acs';
+import { provideConv } from '@neuroassist/conv';
 import { providePat } from '@neuroassist/pat';
 import { provideEdge } from '@neuroassist/edge';
 import { provideEvnt } from '@neuroassist/evnt';
@@ -31,5 +32,9 @@ export const appConfig: ApplicationConfig = {
     // Promotes screens/home as /home (default shell landing) and screens/entry as /entry (shell-level).
     // Promoted by /fe-architect-promote neuroassist-niv DASH.
     ...provideDash(),
+    // CONV defaults to http adapter (conv-service published — BE M1.5; SPEC-04 §2).
+    // carry-forward `scaffold:mock-adapter-default` — default is 'http', not 'mock'.
+    // Promoted by /fe-architect-promote neuroassist-niv CONV.
+    ...provideConv(),
   ],
 };
