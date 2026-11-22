@@ -1,0 +1,30 @@
+@startuml c4-container-mig
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.4.0/C4_Container.puml
+
+title MIG — Container Diagram (neuroassist-niv-migrations)
+
+Person(ops, "Platform / Ops Operator")
+
+System_Boundary(mig, "neuroassist-niv-migrations (MIG)") {
+  Container(runner, "MigrationsJobRunner", "Spring Boot CommandLineRunner (web-application-type=none)", "Parses run mode, orchestrates baseline -> global pass -> tenant pass, sets exit code")
+  Container(schemaAdmin, "SchemaAdmin", "Java / admin JDBC", "CREATE EXTENSION / CREATE SCHEMA outside any transaction (INV-MIG-6)")
+  Container(flywayRunner, "FlywayRunner", "flyway-core", "Builds and runs one Flyway instance per schema (schemas, search_path, locations)")
+  Container(enumerator, "TenantSchemaEnumerator", "Java", "Lists t_<tenantId> from information_schema")
+  Container(rangeRegistry, "RangeRegistry", "Java", "Reads/validates migration_range_registry (reserved-block guard)")
+}
+
+SystemDb(pg, "PostgreSQL", "neuroassist_global + every t_<tenantId>")
+ContainerDb(regTable, "migration_range_registry", "table in neuroassist_global", "Authoritative reserved-block map (ADR-004)")
+ContainerDb(history, "flyway_schema_history", "per schema (Flyway-owned)", "Applied-state ledger")
+
+Rel(ops, runner, "Invokes with run mode", "CLI args")
+Rel(runner, schemaAdmin, "Ensures baseline / creates schema")
+Rel(runner, enumerator, "Lists tenants")
+Rel(runner, rangeRegistry, "Validates blocks before apply")
+Rel(runner, flywayRunner, "Migrates each schema")
+Rel(schemaAdmin, pg, "DDL (non-transactional)", "JDBC admin")
+Rel(flywayRunner, pg, "migrate() per schema", "JDBC")
+Rel(rangeRegistry, regTable, "read")
+Rel(flywayRunner, history, "read/write (Flyway)")
+
+@enduml

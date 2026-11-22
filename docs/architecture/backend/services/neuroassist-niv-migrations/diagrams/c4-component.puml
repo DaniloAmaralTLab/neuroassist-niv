@@ -1,0 +1,32 @@
+@startuml c4-component-mig
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.4.0/C4_Component.puml
+
+title MIG — Component Diagram (job-shaped package, not hexagonal)
+
+' MIG is NOT hexagonally layered (doc 04 / ADR-001): no domain/application/adapter
+' split because there is no aggregate. Flat, job-shaped com.neuroassist.migrations.
+
+Container_Boundary(pkg, "com.neuroassist.migrations") {
+  Component(app, "MigrationsApplication", "Spring Boot entry", "web-application-type=none")
+  Component(runner, "MigrationsJobRunner", "CommandLineRunner", "Parse run mode, orchestrate passes, exit code")
+  Component(mode, "MigrationMode", "enum", "ALL | GLOBAL_ONLY | TENANT | PROVISION_TENANT")
+  Component(schemaAdmin, "SchemaAdmin", "component", "CREATE EXTENSION / CREATE SCHEMA via admin JDBC, non-transactional")
+  Component(flywayRunner, "FlywayRunner", "component", "Build + run Flyway per schema (schemas, placeholders, locations)")
+  Component(enumerator, "TenantSchemaEnumerator", "component", "List t_<tenantId> from information_schema")
+  Component(rangeRegistry, "RangeRegistry", "component", "Read/validate migration_range_registry (no-overlap guard)")
+}
+
+SystemDb(pg, "PostgreSQL", "neuroassist_global + t_<tenantId>")
+
+Rel(app, runner, "runs")
+Rel(runner, mode, "parses into")
+Rel(runner, schemaAdmin, "ensure baseline / create schema")
+Rel(runner, enumerator, "list tenants")
+Rel(runner, rangeRegistry, "validate blocks")
+Rel(runner, flywayRunner, "migrate each schema")
+Rel(schemaAdmin, pg, "DDL")
+Rel(flywayRunner, pg, "migrate()")
+Rel(enumerator, pg, "query information_schema")
+Rel(rangeRegistry, pg, "read registry")
+
+@enduml

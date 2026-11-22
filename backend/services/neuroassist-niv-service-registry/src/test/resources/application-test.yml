@@ -1,0 +1,8 @@
+# Profile 'test' - infra service, no datasource/messaging.
+# Do NOT set eureka.client.enabled=false: it removes ApplicationInfoManager, which
+# EurekaServerAutoConfiguration requires. register-with-eureka/fetch-registry=false
+# (application.yml) already make the server standalone.
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false

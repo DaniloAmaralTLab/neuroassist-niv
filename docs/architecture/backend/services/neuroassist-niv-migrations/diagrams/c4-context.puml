@@ -1,0 +1,24 @@
+@startuml c4-context-mig
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.4.0/C4_Context.puml
+
+title MIG — System Context (neuroassist-niv-migrations)
+
+Person(ops, "Platform / Ops Operator", "Runs MIG before first fleet start, on each deploy, and at tenant provisioning; owns the datasource wiring")
+
+System(mig, "neuroassist-niv-migrations (MIG)", "Centralized Flyway migrator job. Creates and versions neuroassist_global and every t_<tenantId>; forward-only, checksum-validated. Runs and exits.")
+
+SystemDb(pg, "PostgreSQL", "Schema-per-tenant: neuroassist_global + every t_<tenantId>. Admin datasource (CREATE SCHEMA / EXTENSION).")
+
+System_Ext(services, "Business services (ACS, PAT, EDGE, EVNT, GEST, HIST, CONV, TRN)", "Author V00xx DDL in reserved blocks; keep spring.flyway.enabled=false. Do NOT run Flyway.")
+
+Rel(ops, mig, "Invokes", "CLI: --all | --global-only | --tenant <id> | --provision-tenant <id>")
+Rel(mig, pg, "Applies migrations per schema", "JDBC (admin)")
+Rel(services, mig, "Author scripts applied by (offline, build-time)", "reserved-block V00xx files")
+
+note right of mig
+  No HTTP API, no server port.
+  Not a Eureka client. Messaging disabled.
+  No TechLab AI dependency. No PHI.
+end note
+
+@enduml

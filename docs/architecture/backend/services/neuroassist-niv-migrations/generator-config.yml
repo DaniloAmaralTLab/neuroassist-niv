@@ -1,0 +1,37 @@
+service: neuroassist-niv-migrations
+type: migrations
+# MIG has no HTTP port (spring.main.web-application-type: none, ADR-002)
+port: 0
+
+domain:
+  # MIG owns no business aggregate; migration_range_registry is a utility table, not an aggregate
+  aggregates: []
+  entities: []
+
+# The runner's "operations" map to the four CLI run modes (SPEC-01, api-contract.md)
+application_services:
+  - name: MigrationsJobRunner
+    operations:
+      - runAll
+      - runGlobalOnly
+      - runTenant
+      - provisionTenant
+
+enums:
+  MigrationMode:
+    - ALL
+    - GLOBAL_ONLY
+    - TENANT
+    - PROVISION_TENANT
+
+feign_clients: []
+
+consumed_events: []
+
+events:
+  published: []
+
+# MIG owns one utility table in neuroassist_global (not a business aggregate)
+outbound_ports: []
+
+extra_dependencies: []
