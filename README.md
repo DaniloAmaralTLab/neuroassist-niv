@@ -7,6 +7,7 @@ The product is inspired by a technical hypothesis validated in internal discover
 The single end-to-end scenario that defines "working" is in [docs/success-bar.md](docs/success-bar.md).
 Outside services (language model, text-to-speech, search, camera) run as local fakes: see [docs/offline-providers.md](docs/offline-providers.md).
 Gesture detection is rule-based on recorded landmarks, with no model work: see [docs/gesture-detection-scope.md](docs/gesture-detection-scope.md).
+Implementation order, one module per session: [docs/session-plan.md](docs/session-plan.md).
 
 ## Getting started
 
