@@ -1,0 +1,109 @@
+spring:
+  application:
+    name: neuroassist-niv-api-gateway
+  cloud:
+    gateway:
+      # R1..R8 — explicit route table (api-contract §2, integration-contracts §1).
+      # NO StripPrefix — each service serves under its own path prefix (Assumption A1).
+      # Routes are declared here; auto-locator disabled (integration-contracts §3).
+      routes:
+        # R1 — ACS (Caregivers and Access) — authenticated + public subset (§3)
+        - id: r1-acs
+          uri: lb://acs-service
+          predicates:
+            - Path=/acs/**
+        # R2 — PAT (Patients and Command Catalog) — authenticated
+        - id: r2-pat
+          uri: lb://pat-service
+          predicates:
+            - Path=/pat/**
+        # R3 — HIST (History and Audit Trail) — authenticated
+        - id: r3-hist
+          uri: lb://hist-service
+          predicates:
+            - Path=/hist/**
+        # R4 — EDGE (Edge Device Integration) — authenticated + public subset (§3)
+        - id: r4-edge
+          uri: lb://edge-service
+          predicates:
+            - Path=/edge/**
+        # R5 — CONV (Conversation via Speech Tree) — authenticated
+        - id: r5-conv
+          uri: lb://conv-service
+          predicates:
+            - Path=/conv/**
+        # R6 — EVNT (Events and Alarms) — authenticated
+        - id: r6-evnt
+          uri: lb://evnt-service
+          predicates:
+            - Path=/evnt/**
+        # R7 — GEST (Gesture Detection) — authenticated
+        - id: r7-gest
+          uri: lb://gest-service
+          predicates:
+            - Path=/gest/**
+        # R8 — TRN (AI-Assisted Training) — CONFIRMED port 8089 (G2 closed)
+        - id: r8-trn
+          uri: lb://trn-service
+          predicates:
+            - Path=/trn/**
+      discovery:
+        locator:
+          # Routes are declared explicitly — no auto-locator (integration-contracts §3)
+          enabled: false
+
+server:
+  port: 8080
+  # Header ceiling (Netty default 8 KB). Downstream services accept 24 KB to avoid
+  # returning Tomcat's HTML 400 to the browser.
+  max-http-request-header-size: 16KB
+
+# Two JWKS issuers (ADR-002, INV-G6): ACS (caregiver + patient-session) + EDGE (edge.device).
+# jwk-set-uri used (not issuer-uri) to avoid OIDC discovery at startup — framework defect
+# in generated template (application-gateway.yml.j2 emits issuer-uri pointing to Keycloak).
+gateway:
+  jwks:
+    acs-uri: ${ACS_JWKS_URI:http://localhost:8081/acs/.well-known/jwks.json}
+    edge-uri: ${EDGE_JWKS_URI:http://localhost:8084/edge/.well-known/jwks.json}
+  cors:
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+    allowed-methods:
+      - GET
+      - POST
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - Authorization
+      - X-Correlation-Id
+      - Content-Type
+    exposed-headers:
+      - X-Correlation-Id
+    allow-credentials: true
+  ratelimit:
+    login:
+      capacity: ${RATELIMIT_LOGIN_CAPACITY:5}
+      refill-per-minute: ${RATELIMIT_LOGIN_REFILL:5}
+    pairing:
+      capacity: ${RATELIMIT_PAIRING_CAPACITY:10}
+      refill-per-minute: ${RATELIMIT_PAIRING_REFILL:10}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}

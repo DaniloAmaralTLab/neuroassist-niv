@@ -1,0 +1,27 @@
+@startuml c4-context-gwy
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title GWY (neuroassist-niv-api-gateway) - Context
+
+Person(caregiver, "Caregiver (web shell)", "Angular dashboard; every call transits the gateway")
+Person(patient_edge, "Patient app / Edge station", "Patient-session and edge.device clients")
+Person(operator, "Platform / Ops Operator", "Owns route config, CORS origins, rate limits")
+
+System(gwy, "neuroassist-niv-api-gateway (GWY)", "Spring Cloud Gateway (reactive). Single ingress: routes by lb://, coarse two-issuer JWT edge check, strips tenant header, emits correlation id, CORS + login/pairing rate limit. Routes, never composes. No PHI.")
+
+System_Ext(services, "NeuroAssist NIV business services", "acs / pat / hist / edge / conv / evnt / gest / trn")
+System_Ext(reg, "neuroassist-niv-service-registry (REG)", "Eureka: resolves lb:// targets")
+System_Ext(acs_jwks, "ACS JWKS", "Signing keys for caregiver + patient-session tokens")
+System_Ext(edge_jwks, "EDGE JWKS", "Signing keys for edge.device tokens")
+System_Ext(obs, "Elasticsearch", "PHI-free access/lifecycle logs + metrics")
+
+Rel(caregiver, gwy, "HTTPS calls (CORS, bearer)", "HTTP")
+Rel(patient_edge, gwy, "HTTPS calls (bearer)", "HTTP")
+Rel(operator, gwy, "Route/CORS/rate-limit config", "config")
+Rel(gwy, services, "Routes by lb:// (full path, no strip)", "HTTP")
+Rel(gwy, reg, "Resolves lb:// targets; registers", "Eureka protocol")
+Rel(gwy, acs_jwks, "Fetches + caches keys", "HTTP")
+Rel(gwy, edge_jwks, "Fetches + caches keys", "HTTP")
+Rel(gwy, obs, "PHI-free logs + metrics", "best-effort")
+
+@enduml

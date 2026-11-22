@@ -1,0 +1,24 @@
+service: neuroassist-niv-api-gateway
+type: gateway
+port: 8080
+# bounded_context pins the generated root package to com.neuroassist.gateway
+# (package_suffix = re.sub([-_],'',bounded_context).lower() = "gateway").
+# WITHOUT this, be-module-generator.py falls back to issue_prefix.lower() for
+# infra services and would emit com.neuroassist.gwy — the exact defect the REG
+# run hit (com.neuroassist.reg). Keep it declared.
+bounded_context: gateway
+issue_prefix: GWY
+# public_paths: the anonymous allow-list (paths that bypass the edge JWT check).
+# NOTE (framework gap, see SPEC-06 / integration-contracts §6): the current
+# gateway templates (security-config-gateway.java.j2, application-gateway.yml.j2)
+# do NOT consume public_paths for the WebFlux filter chain — they permitAll only
+# /actuator/health + /actuator/prometheus and wire a SINGLE issuer-uri. The
+# scaffold/backlog must wire this allow-list and the two JWKS by hand. Declared
+# here as the authoritative source for that hand-wiring.
+public_paths:
+  - "POST /acs/auth/login"
+  - "GET /acs/.well-known/jwks.json"
+  - "GET /edge/.well-known/jwks.json"
+  - "POST /edge/devices/pair"
+  - "GET /edge/actuator/health"
+  - "GET /actuator/health"

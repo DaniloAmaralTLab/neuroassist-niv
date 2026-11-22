@@ -20,7 +20,7 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 | REG | neuroassist-niv-service-registry | OK | OK | N/A | OK | OK | 2026-11-22 |
 | MIG | neuroassist-niv-migrations | OK | OK | N/A | OK | OK | 2026-11-22 |
 | TRN | trn-service | OK | OK | OK | OK | OK | 2026-11-22 |
-| GWY | neuroassist-niv-api-gateway | OK | OK | N/A | em andamento | pendente | 2026-11-22 |
+| GWY | neuroassist-niv-api-gateway | OK | OK | N/A | OK | OK | 2026-11-22 |
 
 ## Ledger de gates diferidos
 
@@ -48,6 +48,13 @@ Legenda de status: `pendente` | `em andamento` | `OK` | `bloqueado` | `N/A`
 | 2026-11-20 | DASH/dash-service | backendPipeline | `ADR-001 dash-has-no-backend-service` | N/A - DASH has no backend (FE composition of PAT/EDGE/EVNT/HIST APIs); registry backendService kept as docs anchor; no MIG/GWY/REG entries |
 | 2026-11-22 | REG/neuroassist-niv-service-registry | integrationTest | `gradle test (ApplicationContextLoadsIT)` | OK (1/1; test yml fixed: no eureka.client.enabled=false) |
 | 2026-11-22 | MIG/neuroassist-niv-migrations | integrationTest (ApplicationContextLoadsIT) | `gradle :neuroassist-niv-migrations:test --tests '*.integration.*'` | OK — contextLoads passed (webEnvironment=NONE; no Docker needed) |
+| 2026-11-22 | GWY/neuroassist-niv-api-gateway | compileJava | `gradle compileJava` | OK |
+| 2026-11-22 | GWY/neuroassist-niv-api-gateway | architectureCheck | `gradle test --tests *.architecture.*` | OK (9 tests, RULE-01..06+09; RULE-03/07/08 vacuous - gateway has no domain/jpa) |
+| 2026-11-22 | GWY/neuroassist-niv-api-gateway | authBoundary | `gradle test --tests *.security.*` | OK (D-642: 6/6 — unauthenticated→401, public→not401, invalid→401, expired→401, valid→503not401) |
+| 2026-11-22 | GWY/neuroassist-niv-api-gateway | filterUnit | `gradle test --tests *.filter.*` | OK (4/4 — CorrelationId×2, TenantStrip×2) |
+| 2026-11-22 | GWY/neuroassist-niv-api-gateway | phiAccessLog | `configure logback access log` | DIFERIDO (operational/logback config — Layer 2) |
+| 2026-11-22 | GWY/neuroassist-niv-api-gateway | routeResilience | `configure resilience4j per-route circuit breaker + timeouts` | DIFERIDO (per-route CBR + timeout config — Layer 2) |
+| 2026-11-22 | GWY/neuroassist-niv-api-gateway | errorBody502503504 | `implement custom ErrorWebExceptionHandler` | DIFERIDO (RFC7807 for 502/503/504 routing errors — Layer 2) |
 
 ## Log cronologico
 - 2026-11-19T17:46:00 -- ACS -- M1 Vision -- OK -- BE 11 artifacts

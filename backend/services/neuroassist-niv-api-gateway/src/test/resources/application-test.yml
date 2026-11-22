@@ -1,0 +1,50 @@
+# Profile 'test' — no datasource, no messaging, no Eureka, no live JWKS fetching.
+#
+# Framework defect (1/2): generated application.yml had issuer-uri pointing to Keycloak —
+# that triggers OIDC discovery at context startup and fails when Keycloak is not running.
+# Fix: application.yml now uses jwk-set-uri (lazy) under gateway.jwks.*.
+#
+# Framework defect (2/2): generated BaseIntegrationTest used RANDOM_PORT; this is CORRECT
+# for a WebFlux gateway (HTTP server must start for routing/security tests). Using NONE would
+# prevent the gateway from starting and break AuthBoundaryTest. No change needed.
+eureka:
+  client:
+    enabled: false
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+
+# Stub JWKS URIs for tests — the real SecurityConfig creates decoders but the test overrides
+# the ReactiveAuthenticationManagerResolver with a @Primary test bean, so these URIs are
+# never actually fetched. Property must be present to satisfy @Value injection in SecurityConfig.
+gateway:
+  jwks:
+    acs-uri: http://localhost:1/test-not-fetched
+    edge-uri: http://localhost:1/test-not-fetched
+  cors:
+    allowed-origins:
+      - http://localhost:4200
+    allowed-methods:
+      - GET
+      - POST
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - Authorization
+      - X-Correlation-Id
+      - Content-Type
+    exposed-headers:
+      - X-Correlation-Id
+    allow-credentials: true
+  ratelimit:
+    login:
+      capacity: 100
+      refill-per-minute: 100
+    pairing:
+      capacity: 100
+      refill-per-minute: 100
+

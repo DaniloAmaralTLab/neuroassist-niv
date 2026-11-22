@@ -1,0 +1,26 @@
+@startuml c4-container-gwy
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title GWY (neuroassist-niv-api-gateway) - Container
+
+System_Boundary(gwy_b, "neuroassist-niv-api-gateway (GWY)") {
+  Container(gateway, "Spring Cloud Gateway", "Java 21, Spring Boot, spring-cloud-starter-gateway (reactive / Netty / WebFlux)", "Route table + global filter chain + security/CORS/rate-limit/resilience config. Port 8080. No JPA, no DB, no broker.")
+  Container(routes, "Route table", "In-memory (application.yml)", "8 lb:// routes; /trn/** PROPOSED. Full-path forward, no StripPrefix.")
+  Container(jwks_cache, "JWKS cache", "In-memory", "ACS + EDGE key sets; refreshed on rotation.")
+}
+
+System_Ext(services, "Business services", "acs 8081 / pat 8082 / hist 8083 / edge 8084 / conv 8085 / evnt 8086 / gest 8088 / trn 8089 (proposed)")
+System_Ext(reg, "REG (Eureka)", ":8761 — lb:// resolution")
+System_Ext(acs_jwks, "ACS JWKS", "/acs/.well-known/jwks.json")
+System_Ext(edge_jwks, "EDGE JWKS", "/edge/.well-known/jwks.json")
+System_Ext(obs, "Elasticsearch", "PHI-free logs + metrics")
+
+Rel(gateway, routes, "Loads + matches predicates")
+Rel(gateway, jwks_cache, "Verifies tokens against")
+Rel(gateway, services, "Routes by lb:// (timeout + breaker + idempotent-only retry)", "HTTP")
+Rel(gateway, reg, "Registers + resolves lb://", "Eureka HTTP")
+Rel(jwks_cache, acs_jwks, "Fetches keys", "HTTP")
+Rel(jwks_cache, edge_jwks, "Fetches keys", "HTTP")
+Rel(gateway, obs, "PHI-free logs + metrics", "best-effort")
+
+@enduml

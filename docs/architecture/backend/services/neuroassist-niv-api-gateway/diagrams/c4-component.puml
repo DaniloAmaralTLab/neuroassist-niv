@@ -1,0 +1,38 @@
+@startuml c4-component-gwy
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title GWY (neuroassist-niv-api-gateway) - Component
+
+' GWY is NOT hexagonally layered (ADR-001 / doc 04): a declarative reactive proxy,
+' not a domain/application/infrastructure split. Package com.neuroassist.gateway.
+
+Container_Boundary(gwy, "neuroassist-niv-api-gateway (GWY)") {
+  Component(bootstrap, "GatewayApplication", "@SpringBootApplication @EnableDiscoveryClient (com.neuroassist.gateway)", "Thin bootstrap; no business code.")
+
+  Component(correlation_filter, "CorrelationIdFilter", "global filter (WebFlux)", "Generate-if-absent, preserve, forward, echo X-Correlation-Id; MDC key. INV-G4.")
+  Component(tenant_filter, "TenantHeaderStripFilter", "global filter", "Strips client X-Tenant-Id and variants. INV-G3.")
+  Component(access_log, "AccessLogFilter", "global filter", "PHI-free log: method, route template, status, latency, correlation id. INV-G1.")
+
+  Component(security, "SecurityConfig", "@EnableWebFluxSecurity (reactive)", "Coarse two-issuer JWT edge check (ACS + EDGE JWKS); anonymous allow-list permitAll; advisory not terminal. INV-G2/G5/G6. NOT servlet @EnableMethodSecurity.")
+  Component(cors, "CorsConfig", "CorsWebFilter", "Caregiver-shell origin allow-list; no wildcard-with-credentials. ADR-004.")
+  Component(ratelimit, "RateLimitConfig", "in-memory token bucket", "login + pairing buckets -> 429. ADR-005.")
+  Component(resilience, "Resilience4jConfig", "circuit breaker + timeouts", "Per-route timeout/breaker; idempotent-only retry; PHI-free fallback. ADR-006.")
+
+  Component(routes, "Route table", "application.yml", "8 lb:// routes (full path, no strip); /trn/** PROPOSED.")
+  Component(actuator, "Actuator", "Spring Boot Actuator", "Liveness / readiness / Prometheus, separate from routed traffic.")
+}
+
+System_Ext(reg, "REG (Eureka)", "lb:// resolution")
+
+Rel(bootstrap, security, "Enables")
+Rel(correlation_filter, tenant_filter, "then")
+Rel(tenant_filter, security, "then")
+Rel(security, resilience, "admitted request routed via")
+Rel(resilience, routes, "resolves target from")
+Rel(routes, reg, "lb:// via", "Eureka")
+Rel(cors, security, "admits browser preflight before")
+Rel(ratelimit, security, "throttles login/pairing before")
+Rel(access_log, routes, "observes")
+Rel(actuator, routes, "reports readiness from")
+
+@enduml
