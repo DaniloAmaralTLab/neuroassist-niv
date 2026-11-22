@@ -5,6 +5,7 @@ The product is inspired by a technical hypothesis validated in internal discover
 ## Success bar
 
 The single end-to-end scenario that defines "working" is in [docs/success-bar.md](docs/success-bar.md).
+Outside services (language model, text-to-speech, search, camera) run as local fakes: see [docs/offline-providers.md](docs/offline-providers.md).
 
 ## Getting started
 
